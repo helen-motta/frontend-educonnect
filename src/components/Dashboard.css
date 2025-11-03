@@ -1,0 +1,49 @@
+/* ===== BARRA LATERAL (SIDEBAR) ===== */
+.sidebar {
+  width: 280px;
+  flex-shrink: 0;
+  background-color: #1f1e30;
+}
+
+a {
+  color: var(--bs-body-color);
+  text-decoration: none;
+}
+
+.sidebar .nav-link {
+  color: #ccc; 
+  border-radius: 20px; 
+}
+
+.sidebar .nav-link.active {
+  background-color: #d8f17b;
+  color: #333;
+}
+
+.sidebar .nav-link:hover {
+    font-weight: 1000;
+}
+
+.main-content {
+  background-color: #f9f9f9; 
+}
+
+.dropdown-usuario {
+  font-size: 0.7rem;
+  margin-right: 2rem;
+}
+
+.dados-usuario {
+  margin-right: 0.4rem;
+  color: var(--bs-body-color);
+}
+
+.main-content {
+  background-color: var(--bs-body-bg); 
+  color: var(--bs-body-color);
+}
+
+.btn-notificacoes {
+  text-decoration: none;
+  color: var(--bs-body-color);
+}

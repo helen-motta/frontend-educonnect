@@ -1,0 +1,34 @@
+/* Define um tamanho mínimo para as células não ficarem apertadas */
+.horarios-table th,
+.horarios-table td {
+  min-width: 140px;
+  padding: 1.25rem 0.75rem; /* Mais espaço vertical */
+  height: 100px;
+}
+
+/* Cabeçalho da tabela */
+.horarios-table .thead-light th {
+  background-color: #f8f9fa; /* Um cinza bem claro */
+  border-bottom-width: 2px;
+}
+
+/* Células de Matéria (cores de exemplo) */
+.materia-calculo {
+  background-color: #e6f7ff; /* Azul claro */
+  border-left: 4px solid #1890ff !important;
+}
+
+.materia-fisica {
+  background-color: #fff7e6; /* Laranja claro */
+  border-left: 4px solid #fa8c16 !important;
+}
+
+.materia-programacao {
+  background-color: #f6ffed; /* Verde claro */
+  border-left: 4px solid #52c41a !important;
+}
+
+.materia-algebra {
+  background-color: #fff0f6; /* Rosa claro */
+  border-left: 4px solid #eb2f96 !important;
+}

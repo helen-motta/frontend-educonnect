@@ -1,0 +1,65 @@
+/* Em Matricula.css */
+
+/* Faz o carrinho "flutuar" (Igual ao anterior) */
+.sticky-cart {
+  position: sticky;
+  top: 6.5rem; 
+}
+
+/* Scroll do carrinho (Igual ao anterior) */
+.sticky-cart .list-group {
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+/* --- NOVOS ESTILOS PARA O GRID --- */
+
+/* Ajusta as células da tabela */
+.matricula-grid td, .matricula-grid th {
+  vertical-align: top;
+  padding: 0.5rem;
+  height: 150px; /* Damos uma altura fixa para os slots */
+  min-width: 130px;
+}
+
+/* O "card" da matéria dentro da célula */
+.materia-card {
+  background-color: #f8f9fa; /* Fundo cinza claro */
+  border: 1px solid #dee2e6;
+  border-left: 5px solid #0d6efd; /* Borda azul (primary) */
+  border-radius: 4px;
+  padding: 0.5rem;
+  font-size: 0.8rem;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.materia-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Estado: Lotada */
+.materia-card.lotada {
+  background-color: #f8f9fa;
+  border-left-color: #dc3545; /* Borda vermelha */
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+.materia-card.lotada:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Estado: Já selecionada */
+.materia-card.selecionada {
+  background-color: #d1e7dd; /* Fundo verde (success) */
+  border-left-color: #198754; /* Borda verde */
+  cursor: default;
+  opacity: 0.8;
+}
+.materia-card.selecionada:hover {
+  transform: none;
+  box-shadow: none;
+}
