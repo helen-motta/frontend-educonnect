@@ -1,31 +1,53 @@
-import React from "react";
+import React, { useState } from "react"; // 1. 'useState' foi importado
 import "bootstrap/dist/css/bootstrap.min.css";
 import '../App.css';
 import "./Login.css"; // Seu CSS
-import { useNavigate } from "react-router-dom";
+import { useAuth } from './AuthContext';
 
 export default function Login() {
-  const navigate = useNavigate();
+  const { login } = useAuth(); 
 
-  const redirecionarParaDashboard = () => {
-    console.log("Redirecionando...");
-    navigate("/dashboard/inicio");
+  const [email, setEmail] = useState('');
+  const [senha, setSenha] = useState('');
+
+  // --- MUDANÇA 2: States para o Modal ---
+  const [showModal, setShowModal] = useState(false); // Controla a visibilidade do modal
+  const [resetEmail, setResetEmail] = useState(''); // Controla o e-mail no formulário do modal
+
+  const handleLoginSubmit = (e) => {
+    e.preventDefault();
+    if (!email) {
+      alert('Por favor, insira um e-mail.');
+      return;
+    }
+    login(email);
   };
+
+  // --- MUDANÇA 3: Handlers para o Modal ---
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setResetEmail(''); // Limpa o e-mail ao fechar
+  };
+  
+  // Previne o comportamento padrão do link '#' e abre o modal
+  const handleShowModal = (e) => {
+    e.preventDefault(); 
+    setShowModal(true);
+  };
+
+  // Simula o envio do e-mail de reset
+  const handleResetSubmit = (e) => {
+    e.preventDefault();
+    alert(`(Simulação) Um e-mail de redefinição de senha foi enviado para ${resetEmail}.`);
+    handleCloseModal(); // Fecha o modal após o envio
+  };
+  // --- FIM DAS MUDANÇAS 3 ---
 
   return (
     // O 'wrapper' que centraliza tudo na tela
-    <div className="wrapper d-flex align-items-center" style={{ minHeight: "100vh", backgroundColor: "#f9f9f9" }}>
+    <div className="wrapper d-flex align-items-center" style={{ minHeight: "100vh", backgroundColor: "#f9f9fa" }}>
       
-      {/* O 'login-container' vem do seu CSS e define a largura máxima de 900px
-        em telas grandes, como definimos antes.
-      */}
       <div className="container login-container">
-        
-        {/* Esta 'row' é o card principal.
-          - 'shadow': Adiciona a sombra suave
-          - 'rounded-4': Deixa as bordas bem arredondadas (como na imagem)
-          - 'overflow: hidden': Garante que os filhos não "vazem" das bordas
-        */}
         <div className="row bg-white shadow rounded-4" style={{ overflow: "hidden" }}>
           
           {/* LADO ESQUERDO (Formulário) */}
@@ -34,17 +56,17 @@ export default function Login() {
               
               <h4 className="mb-4">Iniciar sessão</h4>
               
-              <form>
-                {/* ATUALIZAÇÃO: Usando 'form-floating' do Bootstrap
-                  para replicar o efeito da imagem.
-                */}
+              <form onSubmit={handleLoginSubmit}>
+                
                 <div className="form-floating mb-3">
                   <input
                     type="email"
                     className="form-control"
                     id="floatingInput"
-                    placeholder="name@example.com" // Placeholder é necessário, mas não será visto
+                    placeholder="name@example.com"
                     required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                   />
                   <label htmlFor="floatingInput">E-mail</label>
                 </div>
@@ -56,33 +78,35 @@ export default function Login() {
                     id="floatingPassword"
                     placeholder="Password"
                     required
+                    value={senha}
+                    onChange={(e) => setSenha(e.target.value)}
                   />
                   <label htmlFor="floatingPassword">Senha</label>
                 </div>
 
-                {/* ATUALIZAÇÃO: Usando classes customizadas para o estilo */}
                 <button
-                  type="button"
-                  className="btn btn-custom-login w-100"
-                  onClick={redirecionarParaDashboard}
+                  type="submit" 
+                  className="btn btn-custom-login w-100 btn-lg"
                 >
                   Entrar
                 </button>
               </form>
               
-              <a href="/esqueci-senha" className="d-block mt-3 link-custom-login">
+              {/* --- MUDANÇA 4: Link agora abre o modal --- */}
+              <a 
+                href="#" 
+                className="d-block mt-3 link-custom-login"
+                onClick={handleShowModal} // Chama a função para abrir o modal
+              >
                 Esqueci minha senha
               </a>
             </div>
           </div>
 
           {/* LADO DIREITO (Imagens) */}
-          {/* ATUALIZAÇÃO: Adicionamos a classe 'right-side-login' 
-            para aplicar o fundo escuro e as imagens.
-          */}
           <div className="col-md-6 d-none d-md-block p-0 position-relative right-side-login">
-            {/* O 'img-container' do seu CSS cuida do resto */}
             <div className="img-container">
+              {/* ... (suas imagens) ... */}
               <img src="/imagens/logo-educonnect.png" id="img-logo" alt="Logo" />
               <img src="/imagens/chapeu-5.png" className="chapeus" id="chapeu-1" alt="" />
               <img src="/imagens/chapeu-2.png" className="chapeus" id="chapeu-2" alt="" />
@@ -100,6 +124,76 @@ export default function Login() {
           </div>
         </div>
       </div>
+
+      {/* --- MUDANÇA 5: O JSX DO MODAL --- */}
+      {/* Mostrado condicionalmente com base no state 'showModal' */}
+      {showModal && (
+        <>
+          {/* O Modal */}
+<div className="modal fade show" style={{ display: 'block' }} tabIndex="-1">
+  <div className="modal-dialog modal-dialog-centered">
+    <div className="modal-content simple-modal">
+
+      <form onSubmit={handleResetSubmit}>
+        <div className="modal-header border-0 pb-0">
+          <h5 className="modal-title w-100 text-center fw-medium">Redefinir senha</h5>
+          <button
+            type="button"
+            className="btn-close"
+            onClick={handleCloseModal}
+            aria-label="Fechar"
+          ></button>
+        </div>
+
+        <div className="modal-body text-center">
+          <p className="text-muted mb-4">
+            Informe seu e-mail cadastrado para receber o link de redefinição.
+          </p>
+
+          <div className="form-floating mb-3">
+            <input
+              type="email"
+              className="form-control"
+              id="resetEmailInput"
+              placeholder="seu@email.com"
+              value={resetEmail}
+              onChange={(e) => setResetEmail(e.target.value)}
+              required
+              autoFocus
+            />
+            <label htmlFor="resetEmailInput">E-mail</label>
+          </div>
+        </div>
+
+        <div className="modal-footer border-0 d-flex justify-content-end pt-0">
+          <button
+            type="button"
+            className="btn btn-light me-2"
+            onClick={handleCloseModal}
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            className="btn btn-primary"
+            style={{ backgroundColor: '#d8f17b', color: '#222', border: 'none' }}
+            disabled={!resetEmail}
+          >
+            Enviar link
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+
+          {/* O Fundo Escuro (Backdrop) */}
+          <div className="modal-backdrop fade show"></div>
+        </>
+      )}
+      {/* --- FIM DA MUDANÇA 5 --- */}
+      
     </div>
   );
 }

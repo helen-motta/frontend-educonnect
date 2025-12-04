@@ -58,24 +58,6 @@ export default function Requerimentos() {
                 </div>
               </div>
             </div>
-            
-            {/* Card 3: Declaração Financeira (Exemplo) */}
-            <div className="col-md-6">
-              <div className="card shadow-sm border-0 h-100">
-                <div className="card-body text-center p-4">
-                  <i className="bi bi-file-earmark-ruled-fill fs-1 text-info"></i>
-                  <h5 className="card-title mt-3 mb-2">Declaração Financeira</h5>
-                  <p className="card-text small text-muted">Gere um comprovante de quitação ou status dos seus pagamentos.</p>
-                  <button 
-                    className="btn btn-info" 
-                    onClick={() => handleGerarDocumento('Declaração Financeira')}
-                  >
-                    <i className="bi bi-download me-2"></i>Gerar PDF
-                  </button>
-                </div>
-              </div>
-            </div>
-
           </div>
         </div>
 

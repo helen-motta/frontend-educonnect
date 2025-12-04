@@ -30,7 +30,7 @@ export const AuthProvider = ({ children }) => {
         fotoUrl: '/imagens/usuario-generico.png' // Pode ser outra foto
       };
       setUser(userData);
-      navigate('/dashboard/inicio'); // Redireciona para o dashboard
+      navigate('/dashboard/inicioprofessor'); // Redireciona para o dashboard
     }
     else if (email === 'adm@edu.com') {
       const userData = {
@@ -39,7 +39,16 @@ export const AuthProvider = ({ children }) => {
         fotoUrl: '/imagens/usuario-generico.png'
       };
       setUser(userData);
-      navigate('/dashboard/inicio'); // (Admin teria seu próprio dashboard)
+      navigate('/dashboard/inicioadm'); // (Admin teria seu próprio dashboard)
+    }
+    else if (email === 'coordenador@edu.com') {
+        const userData = {
+        nome: 'Coordenador',
+        role: 'coordenador',
+        fotoUrl: '/imagens/usuario-generico.png'
+      };
+      setUser(userData);
+      navigate('/dashboard/inicio-coordenador'); // (Admin teria seu próprio dashboard)
     }
     else {
       // Se o login falhar

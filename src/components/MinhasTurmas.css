@@ -1,0 +1,24 @@
+/* Em src/components/GerenciarTurmas.css */
+
+/* Faz os cards de Ação (Faltas/Notas) parecerem clicáveis */
+.card-acao {
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.card-acao:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Faz a lista de chamada ter um cursor de clique */
+.list-chamada .list-group-item {
+  cursor: pointer;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+/* Muda a cor do texto do aluno ausente para ficar mais óbvio */
+.list-chamada .list-group-item.list-group-item-danger h5 {
+  color: #842029; /* Bootstrap dark red */
+}

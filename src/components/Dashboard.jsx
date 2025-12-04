@@ -1,80 +1,63 @@
 import React from "react";
-// 1. Importe o Outlet e o NavLink
-import { Outlet, NavLink } from "react-router-dom";
+import { Outlet, NavLink, Navigate, Link } from "react-router-dom";
+import { useTheme } from "./ThemeContext";
+import { useAuth } from './AuthContext';
 
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "./Dashboard.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
-import { useTheme } from "./ThemeContext";
+import MenuAluno from './MenuAluno';
+import MenuProfessor from './MenuProfessor';
+import MenuAdm from './MenuAdm';
+import MenuCoordenador from "./MenuCoordenador";
+
+// (Opcional) Função helper para traduzir os papéis
+const getTitulo = (role) => {
+  switch (role) {
+    case 'aluno':
+      return 'Portal do Aluno';
+    case 'professor':
+      return 'Portal do Professor';
+    case 'coordenador':
+      return 'Painel do Coordenador';
+    case 'admin':
+      return 'Painel de Administração';
+    default:
+      return 'Dashboard';
+  }
+};
 
 export default function Dashboard() {
   const { theme, toggleTheme } = useTheme();
+  const { user, logout } = useAuth(); 
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
   return (
-    <div className="d-flex" style={{ minHeight: "100vh" }}>
+    <div className="d-flex" style={{ minHeight: '100vh' }}>
+      
       <nav className="d-flex flex-column p-3 sidebar">
-        <img src="/imagens/logo-educonnect.png" alt="Logo" />
+        <img src="/imagens/logo-educonnect.png" alt="Logo" className="img-fluid sidebar-logo" />
         <hr />
-
         <ul className="nav nav-pills flex-column mb-auto">
-          <li className="nav-item mb-2">
-            <NavLink className="nav-link" to="/dashboard/inicio" end>
-              <i className="bi bi-house-door-fill me-2"></i>
-              Início
-            </NavLink>
-          </li>
-
-          <li className="nav-item mb-2">
-            <NavLink className="nav-link" to="/dashboard/horarios">
-              <i className="bi bi-clock-fill me-2"></i>
-              Horários
-            </NavLink>
-          </li>
-
-          <li className="nav-item mb-2">
-            <NavLink className="nav-link" to="/dashboard/calendario">
-              <i className="bi bi-calendar-week-fill me-2"></i>
-              Calendário
-            </NavLink>
-          </li>
-
-          <li className="nav-item mb-2">
-            <NavLink className="nav-link" to="/dashboard/notasfrequencia">
-              <i className="bi bi-bar-chart-fill me-2"></i>
-              Notas e frequência
-            </NavLink>
-          </li>
-
-          <li className="nav-item mb-2">
-            <NavLink className="nav-link" to="/dashboard/matricula">
-              <i className="bi bi-pencil-square me-2"></i>
-              Matrícula
-            </NavLink>
-          </li>
-
-          <li className="nav-item mb-2">
-            <NavLink className="nav-link" to="/dashboard/requerimentos">
-              <i className="bi bi-file-earmark-text-fill me-2"></i>
-              Requerimentos
-            </NavLink>
-          </li>
-
-          <li className="nav-item mb-2">
-            <NavLink className="nav-link" to="/dashboard/carteirinha">
-              <i className="bi bi-person-badge-fill me-2"></i>
-              Carteirinha
-            </NavLink>
-          </li>
+          {user.role === 'aluno' && <MenuAluno />}
+          {user.role === 'professor' && <MenuProfessor />}
+          {user.role === 'admin' && <MenuAdm />}
+          {user.role === 'coordenador' && <MenuCoordenador />}
         </ul>
       </nav>
 
       <main className="flex-grow-1 p-4 main-content">
         <header className="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
           <div>
-            <h3 className="mb-0"></h3>
+            <h3 className="mb-0">{getTitulo(user.role)}</h3>
           </div>
           <div className="d-flex align-items-center">
-            {/* 3. ADICIONE O BOTÃO DE TEMA */}
+            
+            {/* Botão de Tema (Sempre visível) */}
             <button
               className="btn border-0 p-0 me-3"
               onClick={toggleTheme}
@@ -82,7 +65,6 @@ export default function Dashboard() {
                 theme === "light" ? "Ativar modo noturno" : "Ativar modo claro"
               }
             >
-              {/* O ícone muda baseado no tema! */}
               {theme === "light" ? (
                 <i className="bi bi-moon-fill fs-4"></i>
               ) : (
@@ -90,77 +72,125 @@ export default function Dashboard() {
               )}
             </button>
 
-            {/* Ícone de Notificações */}
-            <div className="dropdown">
-              <a
-                href="#"
-                className="btn-notificacoes"
-                role="button"
-                id="dropdownMenuLink"
-                data-bs-toggle="dropdown"
-                aria-expanded="false"
-              >
-                <i className="bi bi-bell-fill fs-4 position-relative">
-                  <span className="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
-                    <span className="visually-hidden">New alerts</span>
-                  </span>
-                </i>
-              </a>
-
-              {/* O menu dropdown de notificações */}
-              <ul
-                className="dropdown-menu dropdown-menu-end shadow-sm border-0"
-                aria-labelledby="dropdownMenuLink"
-              >
-                <li>
-                  <a className="dropdown-item" href="#">
-                    Nova tarefa adicionada
+            {/* --- MUDANÇA AQUI: Sino e Divisor são condicionais --- */}
+            {user.role === 'aluno' && (
+              <>
+                {/* Ícone de Notificações (Só para Aluno) */}
+                <div className="dropdown">
+                  <a
+                    href="#"
+                    className="text-decoration-none" 
+                    role="button"
+                    id="dropdownMenuLink"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                  >
+                    <i className="bi bi-bell-fill fs-4 position-relative">
+                      <span className="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
+                        <span className="visually-hidden">New alerts</span>
+                      </span>
+                    </i>
                   </a>
-                </li>
-                <li>
-                  <a className="dropdown-item" href="#">
-                    Pagamento recebido
-                  </a>
-                </li>
-                <li>
-                  <hr className="dropdown-divider" />
-                </li>
-                <li>
-                  <a className="dropdown-item" href="#">
-                    Ver todas as notificações
-                  </a>
-                </li>
-              </ul>
-            </div>
 
-            {/* Divisor vertical (opcional, para espaçar) */}
-            <div className="mx-3"></div>
+                  {/* O menu dropdown de notificações */}
+                <ul
+                  className="dropdown-menu dropdown-menu-end shadow-sm border-0 dropdown-notifications" // <-- Classe customizada
+                  aria-labelledby="dropdownMenuLink"
+                  style={{ minWidth: '380px' }} // <-- Largura aumentada
+                >
+                  {/* 1. Cabeçalho */}
+                  <li>
+                    <h6 className="dropdown-header">
+                      Notificações
+                      {/* MUDANÇA: Atualizado para 3 */}
+                      <span className="badge bg-danger ms-2">3 novas</span>
+                    </h6>
+                  </li>
+                  <li><hr className="dropdown-divider m-0" /></li>
+                  
+                  {/* 2. Corpo com Scroll (Div para limitar a altura) */}
+                  <div className="dropdown-scroll-area">
+                    
+                    {/* Notificação 1 (Tarefa) */}
+                    <li>
+                      <a className="dropdown-item d-flex align-items-center py-3" href="#">
+                        {/* ÍCONE REMOVIDO */}
+                        <div className="flex-grow-1">
+                          <strong>Nova tarefa adicionada</strong>
+                          <div className="text-muted small">Cálculo I - Lista de Exercícios 2</div>
+                          <small className="text-muted">10 min atrás</small>
+                        </div>
+                        {/* Ponto de "Não lido" */}
+                        <i className="bi bi-circle-fill text-primary ms-auto" style={{fontSize: '8px'}}></i>
+                      </a>
+                    </li>
 
-            {/* 2. Perfil do Usuário (com Dropdown) */}
+                    {/* Notificação 2 (Mudança de Sala) */}
+                    <li>
+                      <a className="dropdown-item d-flex align-items-center py-3" href="#">
+                        {/* ÍCONE REMOVIDO */}
+                        <div className="flex-grow-1">
+                          <strong>Aviso: Mudança de sala</strong>
+                          <div className="text-muted small">Prof. Silva (Cálculo I): A aula de hoje (13/11) será na sala B-105.</div>
+                          <small className="text-muted">1 hora atrás</small>
+                        </div>
+                        <i className="bi bi-circle-fill text-primary ms-auto" style={{fontSize: '8px'}}></i>
+                      </a>
+                    </li>
+
+                    {/* Notificação 3 (Aula Cancelada) */}
+                    <li>
+                      <a className="dropdown-item d-flex align-items-center py-3" href="#">
+                        {/* ÍCONE REMOVIDO */}
+                        <div className="flex-grow-1">
+                          <strong>Aviso: Aula cancelada</strong>
+                          <div className="text-muted small">Prof. Ana (Física II): A aula de amanhã (14/11) foi cancelada.</div>
+                          <small className="text-muted">3 horas atrás</small>
+                        </div>
+                        <i className="bi bi-circle-fill text-primary ms-auto" style={{fontSize: '8px'}}></i>
+                      </a>
+                    </li>
+
+                  </div> {/* Fim da Div de scroll */}
+
+                  {/* 3. Rodapé */}
+                  <li><hr className="dropdown-divider m-0" /></li>
+                  <li>
+                    <a className="dropdown-item text-center py-2 dropdown-footer-link" href="#">
+                      Ver todas as notificações
+                    </a>
+                  </li>
+                </ul>
+                </div>
+
+                {/* Divisor vertical (Só aparece se o sino estiver visível) */}
+                <div className="vr mx-3"></div>
+              </>
+            )}
+            {/* --- FIM DA MUDANÇA --- */}
+
+
+            {/* Perfil do Usuário (Sempre visível) */}
             <div className="dropdown-usuario dropdown">
               <a
                 href="#"
-                className="d-flex align-items-center dropdown-toggle"
+                className="d-flex align-items-center text-decoration-none dropdown-toggle"
                 role="button"
                 id="dropdownUser"
                 data-bs-toggle="dropdown"
                 aria-expanded="false"
               >
-                {/* Imagem de Perfil (Placeholder) */}
                 <img
-                  src="/imagens/usuario-generico.png" // Use um placeholder por enquanto
+                  src={user.fotoUrl || "/imagens/usuario-generico.png"}
                   alt="Foto do usuário"
                   width="40"
                   height="40"
                   className="rounded-circle me-2"
                 />
-                {/* Nome do Usuário */}
                 <div className="dados-usuario d-none d-sm-block">
-                  {" "}
-                  {/* Esconde o nome em telas pequenas */}
-                  <strong>Nome Usuário</strong>
+                  <strong>{user.nome}</strong>
                   <br />
-                  <div class="fw-light">Aluno</div>
+                  <div className="fw-light text-capitalize">{user.role}</div>
                 </div>
               </a>
 
@@ -170,23 +200,23 @@ export default function Dashboard() {
                 aria-labelledby="dropdownUser"
               >
                 <li>
-                  <a className="dropdown-item" href="#">
+                  <Link className="dropdown-item" to="/dashboard/perfil">
                     Perfil
-                  </a>
+                  </Link>
                 </li>
                 <li>
                   <hr className="dropdown-divider" />
                 </li>
                 <li>
-                  <a className="dropdown-item" href="#">
+                  <Link className="dropdown-item" to="/dashboard/configuracoes">
                     Configurações
-                  </a>
+                  </Link>
                 </li>
                 <li>
                   <hr className="dropdown-divider" />
                 </li>
                 <li>
-                  <a className="dropdown-item" href="/login">
+                  <a className="dropdown-item" href="#" onClick={logout}>
                     Sair
                   </a>
                 </li>
@@ -195,7 +225,7 @@ export default function Dashboard() {
           </div>{" "}
           {/* Fim do wrapper da direita */}
         </header>
-
+        
         <Outlet />
       </main>
     </div>

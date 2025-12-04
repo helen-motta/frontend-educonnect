@@ -47,3 +47,47 @@ a {
   text-decoration: none;
   color: var(--bs-body-color);
 }
+
+
+[data-bs-theme="dark"] {
+  --bs-body-bg: #1f1e30; /* O valor RGB de #f8f9fa */
+}
+
+/* Em Dashboard.css */
+
+/* Define uma altura máxima e adiciona a barra de rolagem */
+.dropdown-notifications .dropdown-scroll-area {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* Remove o padding padrão do <a> para o d-flex funcionar */
+.dropdown-notifications .dropdown-item {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  /* Garante que o texto possa quebrar */
+  white-space: normal;
+}
+
+/* Melhora a legibilidade do texto "small" */
+.dropdown-notifications .dropdown-item .small {
+  font-size: 0.75rem; /* 12px */
+}
+
+/* Estiliza o cabeçalho */
+.dropdown-notifications .dropdown-header {
+  padding: 1rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* Estiliza o rodapé */
+.dropdown-notifications .dropdown-footer-link {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--bs-primary);
+}
+
+.dropdown-notifications .dropdown-footer-link:hover {
+  background-color: var(--bs-light);
+}
