@@ -1,4 +1,3 @@
-// Dentro do seu componente Inicio.jsx
 import React from 'react';
 
 export default function Inicio() {
@@ -17,7 +16,6 @@ export default function Inicio() {
           </div>
         </div>
         <div className="col-md-4">
-          {/* Aqui entraria o Card "Próximas Entregas" */}
           <div className="card shadow-sm border-0 h-100">
             <div className="card-body">
               <h5 className="card-title">Próximas entregas</h5>
@@ -30,23 +28,18 @@ export default function Inicio() {
         </div>
       </div>
 
-      {/* Linha 2: Avisos e Desempenho */}
       <div className="row g-4 mb-4">
         <div className="col-md-7">
-          {/* Aqui entraria o Card "Avisos Recentes" */}
           <div className="card shadow-sm border-0">
             <div className="card-body">
               <h5 className="card-title">Avisos</h5>
               <p className="card-text">Prof. Silva (Cálculo I): A aula de sexta-feira foi cancelada.</p>
-              {/* ... mais avisos ... */}
             </div>
           </div>
         </div>
       </div>
       
-      {/* Linha 3: Meus Cursos (Hub Principal) */}
       <div className="row g-4">
-         {/* ... (cards para "Meus Cursos") ... */}
       </div>
     </>
   );

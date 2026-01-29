@@ -12,7 +12,6 @@ import MenuProfessor from './MenuProfessor';
 import MenuAdm from './MenuAdm';
 import MenuCoordenador from "./MenuCoordenador";
 
-// (Opcional) Função helper para traduzir os papéis
 const getTitulo = (role) => {
   switch (role) {
     case 'aluno':
@@ -32,6 +31,8 @@ export default function Dashboard() {
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth(); 
 
+  console.log(user)
+
   if (!user) {
     return <Navigate to="/login" replace />;
   }
@@ -43,10 +44,10 @@ export default function Dashboard() {
         <img src="/imagens/logo-educonnect.png" alt="Logo" className="img-fluid sidebar-logo" />
         <hr />
         <ul className="nav nav-pills flex-column mb-auto">
-          {user.role === 'aluno' && <MenuAluno />}
-          {user.role === 'professor' && <MenuProfessor />}
-          {user.role === 'admin' && <MenuAdm />}
-          {user.role === 'coordenador' && <MenuCoordenador />}
+          {user.usuario.idPerfil === 1 && <MenuAdm />}
+          {user.usuario.idPerfil === 2 && <MenuCoordenador />}
+          {user.usuario.idPerfil === 3 && <MenuProfessor />}
+          {user.usuario.idPerfil === 4 && <MenuAluno />}
         </ul>
       </nav>
 

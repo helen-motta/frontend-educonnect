@@ -32,65 +32,89 @@ export default function Horarios() {
               {/* Corpo com as aulas */}
               <tbody>
                 <tr>
-                  <th scope="row">08:00 - 09:50</th>
-                  {/* Bloco de matéria (com classe de cor) */}
-                  <td className="materia-calculo">
-                    <strong>Cálculo I</strong>
-                    <small className="d-block text-muted">Prof. Silva | B-203</small>
+                  <th scope="row">08:00 - 09:45</th>
+                  <td className="materia-engenharia">
+                    <strong>Engenharia de Software</strong>
+                    <small className="d-block text-muted">Prof. Carlos | Sala 301</small>
                   </td>
-                  {/* Bloco de matéria (com classe de cor) */}
-                  <td className="materia-fisica">
-                    <strong>Física II</strong>
-                    <small className="d-block text-muted">Prof. Ana | Lab. 03</small>
+                  <td className="materia-arquitetura">
+                    <strong>Arquitetura de Software</strong>
+                    <small className="d-block text-muted">Prof. Roberto | Sala 401</small>
                   </td>
-                  <td className="materia-calculo">
-                    <strong>Cálculo I</strong>
-                    <small className="d-block text-muted">Prof. Silva | B-203</small>
+                  <td className="materia-engenharia">
+                    <strong>Engenharia de Software</strong>
+                    <small className="d-block text-muted">Prof. Carlos | Sala 301</small>
                   </td>
-                  <td className="materia-fisica">
-                    <strong>Física II</strong>
-                    <small className="d-block text-muted">Prof. Ana | Lab. 03</small>
+                  <td className="materia-padroes">
+                    <strong>Padrões de Projeto</strong>
+                    <small className="d-block text-muted">Prof. Julia | Lab 02</small>
                   </td>
-                  {/* Bloco vazio */}
-                  <td className="table text-muted">---</td>
+                  <td className="materia-banco">
+                    <strong>---</strong>
+                  </td>
                 </tr>
 
                 <tr>
-                  <th scope="row">10:00 - 11:50</th>
-                  {/* Bloco de intervalo (usando colSpan) */}
+                  <th scope="row">10:00 - 11:45</th>
+                  <td className="materia-padroes">
+                    <strong>Padrões de Projeto</strong>
+                    <small className="d-block text-muted">Prof. Julia | Lab 02</small>
+                  </td>
+                  <td className="materia-qualidade">
+                    <strong>Qualidade de Software</strong>
+                    <small className="d-block text-muted">Prof. Fernanda | Sala 302</small>
+                  </td>
+                  <td className="materia-redes">
+                    <strong>---</strong>
+                  </td>
+                  <td className="materia-qualidade">
+                    <strong>Qualidade de Software</strong>
+                    <small className="d-block text-muted">Prof. Fernanda | Sala 302</small>
+                  </td>
+                  <td className="materia-redes">
+                    <strong>---</strong>
+                  </td>
+                </tr>
+
+                <tr>
+                  <th scope="row">11:45 - 13:00</th>
                   <td className="table text-muted" colSpan="5">
-                    Intervalo
+                    Intervalo para Almoço
                   </td>
                 </tr>
 
                 <tr>
-                  <th scope="row">14:00 - 15:50</th>
-                  <td className="table text-muted">---</td>
-                  <td className="materia-programacao">
-                    <strong>Programação I</strong>
-                    <small className="d-block text-muted">Prof. Bia | Lab. 12</small>
+                  <th scope="row">13:00 - 14:45</th>
+                  <td className="materia-banco">
+                    <strong>---</strong>
                   </td>
-                  <td className="table text-muted">---</td>
-                  <td className="materia-programacao">
-                    <strong>Programação I</strong>
-                    <small className="d-block text-muted">Prof. Bia | Lab. 12</small>
+                  <td className="materia-sistemas">
+                    <strong>---</strong>
                   </td>
-                  <td className="table text-muted">---</td>
+                  <td className="materia-metodologia">
+                    <strong>---</strong>
+                  </td>
+                  <td className="materia-sistemas">
+                    <strong>---</strong>
+                  </td>
+                  <td className="materia-arquitetura">
+                    <strong>Arquitetura de Software</strong>
+                    <small className="d-block text-muted">Prof. Roberto | Sala 401</small>
+                  </td>
                 </tr>
 
                 <tr>
-                  <th scope="row">16:00 - 17:50</th>
-                  <td className="materia-algebra">
-                    <strong>Álgebra Linear</strong>
-                    <small className="d-block text-muted">Prof. Marcos | C-101</small>
+                  <th scope="row">15:00 - 16:45</th>
+                  <td className="table text-muted">---</td>
+                  <td className="table text-muted">---</td>
+                  <td className="materia-redes">
+                    <strong>---</strong>
                   </td>
                   <td className="table text-muted">---</td>
-                  <td className="materia-algebra">
-                    <strong>Álgebra Linear</strong>
-                    <small className="d-block text-muted">Prof. Marcos | C-101</small>
+                  <td className="materia-engenharia">
+                    <strong>Engenharia de Software</strong>
+                    <small className="d-block text-muted">Prof. Carlos | Sala 301</small>
                   </td>
-                  <td className="table text-muted">---</td>
-                  <td className="table text-muted">---</td>
                 </tr>
               </tbody>
             </table>

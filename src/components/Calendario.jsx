@@ -4,12 +4,19 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import bootstrap5Plugin from '@fullcalendar/bootstrap5';
-
+import ptBrLocale from '@fullcalendar/core/locales/pt-br';
+import './Calendario.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
 // --- Dados de Exemplo (Mock) ---
 const EVENTOS_INICIAIS = [
-  // ... (seus eventos mockados)
+  // ===== ENTREGAS DE TRABALHOS =====
+  { title: 'Entrega - Projeto ES', start: '2026-01-31' },
+  { title: 'Entrega - Padrões de Projeto', start: '2026-02-05' },
+  { title: 'Entrega - Arquitetura v1', start: '2026-02-12' },
+  { title: 'Entrega - Trabalho BD II', start: '2026-02-19' },
+  { title: 'Entrega - Metodologia', start: '2026-02-26' },
+
 ];
 
 export default function Calendario() {
@@ -42,6 +49,8 @@ export default function Calendario() {
                   interactionPlugin
                 ]}
                 themeSystem="bootstrap5"
+                locales={[ptBrLocale]}
+                locale="pt-br"
                 headerToolbar={{
                   left: 'prev,next today',
                   center: 'title',

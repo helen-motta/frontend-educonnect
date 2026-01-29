@@ -1,8 +1,6 @@
-// No seu App.js ou index.js
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
-// Importe seus componentes de página
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import Inicio from './components/Inicio';
@@ -18,6 +16,7 @@ import MinhasTurmas from './components/MinhasTurmas';
 import Comunicados from './components/Comunicados';
 import GerenciarUsuarios from './components/GerenciarUsuarios';
 import GerenciarCursos from './components/GerenciarCursos';
+import Inscricao from './components/Inscricao';
 import LogsSistema from './components/LogsSistema';
 import GerenciarTurmas from './components/GerenciarTurmas';
 import GerenciarRequerimentos from './components/GerenciarRequerimentos';
@@ -26,6 +25,8 @@ import InicioCoordenador from './components/InicioCoordenador';
 import CalendarioProfessor from './components/CalendarioProfessor';
 import Perfil from './components/Perfil';
 import ConfiguracoesPerfil from './components/ConfiguracoesPerfil';
+import BoasVindas from './components/BoasVindas';
+import RedefinirSenha from './components/RedefinirSenha';
 
 import { ThemeProvider } from './components/ThemeContext';
 import { AuthProvider } from './components/AuthContext';
@@ -38,6 +39,9 @@ function App() {
     <AuthProvider>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/redefinir-senha" element={<RedefinirSenha />} />
+        <Route path="boas-vindas" element={<BoasVindas />} />
+        <Route path="inscricao" element={<Inscricao />} />
 
         <Route path="/dashboard" element={<Dashboard />}>
           
@@ -68,8 +72,7 @@ function App() {
         
         </Route>
 
-        {/* Rota Padrão: Redireciona para /login se não achar nada */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to="/boas-vindas" replace />} />
       </Routes>
       </AuthProvider>
     </BrowserRouter>

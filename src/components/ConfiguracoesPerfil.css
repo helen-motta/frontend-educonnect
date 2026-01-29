@@ -64,7 +64,7 @@
 }
 
 /* === Botões === */
-.btn-primary {
+/* .btn-primary {
   background-color: var(--color-primary) !important;
   border: none !important;
   color: var(--color-primary-text) !important;
@@ -75,7 +75,7 @@
 .btn-primary:hover {
   background-color: var(--color-primary-hover) !important;
   color: var(--color-primary-text) !important;
-}
+} */
 
 /* === Transição suave entre abas === */
 .fade-in {

@@ -1,334 +1,291 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import api from './../api';
 
-// --- MOCK DE DADOS (Simula o que viria do Banco de Dados) ---
-const MOCK_CURSOS_INICIAIS = [
-  {
-    id: 'c1',
-    nome: 'Engenharia de Software',
-    disciplinas: [
-      { id: 'es101', codigo: 'CALC101', nome: 'Cálculo I', creditos: 4, ementa: 'Estudo de limites, derivadas e integrais.', semestre: 1, preRequisitos: [] },
-      { id: 'es102', codigo: 'ALG101', nome: 'Álgebra Linear', creditos: 4, ementa: 'Vetores, matrizes e sistemas lineares.', semestre: 1, preRequisitos: [] },
-      { id: 'es103', codigo: 'CALC102', nome: 'Cálculo II', creditos: 4, ementa: 'Derivadas parciais e integrais múltiplas.', semestre: 2, preRequisitos: ['es101'] }, // Pré-requisito: Cálculo I
-      { id: 'es104', codigo: 'PROG101', nome: 'Programação I', creditos: 6, ementa: 'Lógica de programação e estruturas de dados.', semestre: 2, preRequisitos: ['es102'] }, // Pré-requisito: Álgebra
-    ]
-  },
-  {
-    id: 'c2',
-    nome: 'Design Gráfico',
-    disciplinas: [
-      { id: 'dg101', codigo: 'TGP101', nome: 'Teoria Geral da Forma', creditos: 4, ementa: 'Estudo das formas e cores.', semestre: 1, preRequisitos: [] },
-      { id: 'dg102', codigo: 'HIST101', nome: 'História da Arte', creditos: 2, ementa: 'Visão geral da história da arte.', semestre: 1, preRequisitos: [] },
-    ]
-  }
-];
-// -----------------------------------------------------------------
-
-const VALORES_INICIAIS_FORM = {
+const VALORES_INICIAIS_DISCIPLINA = {
   nome: '',
   codigo: '',
-  creditos: 0,
+  carga_horaria: 0,
   ementa: '',
   semestre: 1,
-  preRequisitos: []
+  id_curso: null
+};
+
+const VALORES_INICIAIS_CURSO = {
+  nome: '',
+  codigo: '',
+  descricao: '',
+  email_coordenador: ''
 };
 
 export default function GerenciarCursos() {
-
-  // State principal com todos os dados
-  const [cursos, setCursos] = useState(MOCK_CURSOS_INICIAIS);
+  const [cursos, setCursos] = useState([]);
+  const [loading, setLoading] = useState(true);
   
-  // States de controle do Modal
+  const [paginaAtual, setPaginaAtual] = useState(1);
+  const [totalPaginas, setTotalPaginas] = useState(0);
+  const [filtroNome, setFiltroNome] = useState('');
+  const [filtroCodigo, setFiltroCodigo] = useState('');
+
   const [showModal, setShowModal] = useState(false);
-  const [modalType, setModalType] = useState('nova'); // 'nova' ou 'editar'
-  const [currentCursoId, setCurrentCursoId] = useState(null); // Qual curso estamos editando
-  
-  // State para o formulário (controlado)
-  const [formData, setFormData] = useState(VALORES_INICIAIS_FORM);
+  const [modalType, setModalType] = useState('nova'); 
+  const [formData, setFormData] = useState(VALORES_INICIAIS_DISCIPLINA);
+  const [currentCursoId, setCurrentCursoId] = useState(null);
+  const [isVisualizando, setIsVisualizando] = useState(false);
 
-  /**
-   * Função helper para abrir o modal,
-   * seja para uma nova disciplina ou para editar uma existente.
-   */
-  const handleShowModal = (tipo, cursoId, disciplina = null) => {
+  const [showModalCurso, setShowModalCurso] = useState(false);
+  const [formDataCurso, setFormDataCurso] = useState(VALORES_INICIAIS_CURSO);
+
+  const carregarCursos = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await api.get('/cursos', {
+        params: {
+          paginaNumero: paginaAtual,
+          paginaTamanho: 10,
+          nome: filtroNome || undefined,
+          codigo: filtroCodigo || undefined
+        }
+      });
+      setCursos(response.data.data || []);
+      console.log(response.data);
+      setTotalPaginas(response.data.totalPaginas || 0);
+    } catch (error) {
+      console.error("Erro ao carregar cursos:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [paginaAtual, filtroNome, filtroCodigo]);
+
+  useEffect(() => {
+    carregarCursos();
+  }, [carregarCursos]);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ 
+      ...prev, 
+      [name]: name === 'carga_horaria' || name === 'semestre' ? parseInt(value) || 0 : value 
+    }));
+  };
+
+  const handleOpenModal = (tipo, cursoId, disciplina = null) => {
     setModalType(tipo);
     setCurrentCursoId(cursoId);
-    
+    setIsVisualizando(false);
     if (tipo === 'editar' && disciplina) {
-      // Se for editar, preenche o formulário com os dados da disciplina
       setFormData(disciplina);
     } else {
-      // Se for nova, reseta o formulário
-      setFormData(VALORES_INICIAIS_FORM);
+      setFormData({ ...VALORES_INICIAIS_DISCIPLINA, id_curso: cursoId });
     }
-    
     setShowModal(true);
   };
 
-  const handleCloseModal = () => {
-    setShowModal(false);
-    setFormData(VALORES_INICIAIS_FORM);
-    setCurrentCursoId(null);
+  const handleVisualizarDisciplina = (disciplina) => {
+    setModalType('visualizar');
+    setFormData(disciplina);
+    setIsVisualizando(true);
+    setShowModal(true);
   };
 
-  // Handler genérico para os inputs do formulário
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  // Handler específico para o <select multiple>
-  const handleMultiSelectChange = (e) => {
-    const options = [...e.target.selectedOptions];
-    const values = options.map(option => option.value);
-    setFormData(prev => ({ ...prev, preRequisitos: values }));
-  };
-
-  /**
-   * Lógica para salvar (Adicionar ou Editar)
-   */
-  const handleSalvarDisciplina = (e) => {
+  const handleSalvarDisciplina = async (e) => {
     e.preventDefault();
-
-    if (modalType === 'nova') {
-      // --- Lógica de ADICIONAR ---
-      const novaDisciplina = { ...formData, id: `d${Date.now()}` };
-      
-      setCursos(prevCursos => 
-        prevCursos.map(curso => {
-          if (curso.id === currentCursoId) {
-            return { ...curso, disciplinas: [...curso.disciplinas, novaDisciplina] };
-          }
-          return curso;
-        })
-      );
-      
-    } else {
-      // --- Lógica de EDITAR ---
-      setCursos(prevCursos =>
-        prevCursos.map(curso => {
-          if (curso.id === currentCursoId) {
-            // Encontra e substitui a disciplina no array
-            const disciplinasAtualizadas = curso.disciplinas.map(d => 
-              d.id === formData.id ? formData : d
-            );
-            return { ...curso, disciplinas: disciplinasAtualizadas };
-          }
-          return curso;
-        })
-      );
-    }
-    
-    handleCloseModal();
-  };
-
-  /**
-   * Lógica para EXCLUIR uma disciplina
-   */
-  const handleExcluirDisciplina = (cursoId, disciplinaId) => {
-    if (window.confirm('Tem certeza que deseja excluir esta disciplina? Isso pode afetar pré-requisitos.')) {
-      setCursos(prevCursos =>
-        prevCursos.map(curso => {
-          if (curso.id === cursoId) {
-            // Filtra a disciplina fora do array
-            const disciplinasAtualizadas = curso.disciplinas.filter(d => d.id !== disciplinaId);
-            return { ...curso, disciplinas: disciplinasAtualizadas };
-          }
-          return curso;
-        })
-      );
+    if (isVisualizando) return;
+    try {
+      if (modalType === 'nova') {
+        await api.post('/disciplinas', formData);
+      } else {
+        await api.put(`/disciplinas/${formData.id}`, formData);
+      }
+      setShowModal(false);
+      carregarCursos();
+    } catch (error) {
+      alert("Erro ao salvar disciplina. Verifique os dados.");
     }
   };
 
-  /**
-   * Helper para mostrar os nomes dos pré-requisitos na tabela
-   */
-  const getPreRequisitoNomes = (disciplina, curso) => {
-    if (!disciplina.preRequisitos || disciplina.preRequisitos.length === 0) {
-      return <span className="text-muted">Nenhum</span>;
+  const handleExcluirDisciplina = async (id) => {
+    if (window.confirm("Deseja realmente excluir esta disciplina?")) {
+      try {
+        await api.delete(`/disciplinas/${id}`);
+        carregarCursos();
+      } catch (error) {
+        alert("Erro ao excluir disciplina.");
+      }
     }
-    return disciplina.preRequisitos.map(reqId => {
-      const req = curso.disciplinas.find(d => d.id === reqId);
-      return (
-        <span key={reqId} className="badge bg-secondary-subtle text-secondary-emphasis me-1">
-          {req ? req.nome : 'ID Inválido'}
-        </span>
-      );
-    });
   };
 
-  // --- JSX (Renderização) ---
+  const handleInputChangeCurso = (e) => {
+    const { name, value } = e.target;
+    setFormDataCurso(prev => ({ 
+      ...prev, 
+      [name]: value 
+    }));
+  };
+
+  const handleOpenModalCurso = () => {
+    setFormDataCurso(VALORES_INICIAIS_CURSO);
+    setShowModalCurso(true);
+  };
+
+  const handleSalvarCurso = async (e) => {
+    e.preventDefault();
+    try {
+      await api.post('/cursos', formDataCurso);
+      setShowModalCurso(false);
+      carregarCursos();
+    } catch (error) {
+      alert("Erro ao salvar curso. Verifique os dados.");
+    }
+  };
+
   return (
-    <>
-      <h2 className="mb-4">Gerenciar Cursos e Disciplinas</h2>
-
-      <div className="alert alert-light">
-        <i className="bi bi-info-circle-fill me-2"></i>
-        Expanda um curso para ver e gerenciar suas disciplinas.
+    <div className="container-fluid p-4">
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h2>Gerenciar Cursos e Grade Curricular</h2>
+        <button className="btn btn-success" onClick={handleOpenModalCurso}>
+          <i className="bi bi-plus-circle me-2"></i>Novo Curso
+        </button>
       </div>
-      
-      {/* (O botão de "+ Novo Curso" não foi implementado, mas ficaria aqui) */}
 
-      {/* --- 1. ACORDEÃO (Mestre) --- */}
-      <div className="accordion" id="accordionCursos">
-        {cursos.map(curso => (
-          <div className="accordion-item" key={curso.id}>
-            
-            {/* Cabeçalho do Acordeão */}
-            <h2 className="accordion-header" id={`heading-${curso.id}`}>
-              <button 
-                className="accordion-button collapsed" 
-                type="button" 
-                data-bs-toggle="collapse" 
-                data-bs-target={`#collapse-${curso.id}`} 
-                aria-expanded="false" 
-                aria-controls={`collapse-${curso.id}`}
-              >
-                <strong className="fs-5">{curso.nome}</strong>
+      {/* --- BARRA DE FILTROS --- */}
+      <div className="card shadow-sm border-0 mb-4">
+        <div className="card-body py-2">
+          <div className="row g-2 align-items-end">
+            <div className="col">
+              <label className="form-label small fw-bold mb-1">Nome do Curso</label>
+              <input type="text" className="form-control form-control-sm" value={filtroNome} onChange={(e) => setFiltroNome(e.target.value)} />
+            </div>
+            <div className="col">
+              <label className="form-label small fw-bold mb-1">Código</label>
+              <input type="text" className="form-control form-control-sm" value={filtroCodigo} onChange={(e) => setFiltroCodigo(e.target.value)} />
+            </div>
+            <div className="col-md-auto d-flex gap-1">
+              <button className="btn btn-primary btn-sm px-3" onClick={() => { setPaginaAtual(1); carregarCursos(); }}>
+                <i className="bi bi-search"></i>
               </button>
-            </h2>
-            
-            {/* Corpo do Acordeão (Detalhe) */}
-            <div 
-              id={`collapse-${curso.id}`} 
-              className="accordion-collapse collapse" 
-              aria-labelledby={`heading-${curso.id}`} 
-              data-bs-parent="#accordionCursos"
-            >
-              <div className="accordion-body">
-                
-                {/* Botão de Adicionar Disciplina */}
-                <div className="text-end mb-3">
-                  <button 
-                    className="btn btn-primary"
-                    onClick={() => handleShowModal('nova', curso.id)}
-                  >
-                    <i className="bi bi-plus-circle-fill me-2"></i>Adicionar Disciplina
-                  </button>
-                </div>
+              <button className="btn btn-outline-secondary btn-sm" onClick={() => { setFiltroNome(''); setFiltroCodigo(''); }}>
+                Limpar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
 
-                {/* Tabela de Disciplinas */}
-                <div className="table-responsive">
-                  <table className="table table-hover align-middle">
-                    <thead>
-                      <tr>
-                        <th scope="col">Código</th>
-                        <th scope="col">Nome da Disciplina</th>
-                        <th scope="col">Créditos</th>
-                        <th scope="col">Semestre</th>
-                        <th scope="col">Pré-requisitos</th>
-                        <th scope="col">Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {curso.disciplinas.map(disciplina => (
-                        <tr key={disciplina.id}>
-                          <td><strong>{disciplina.codigo}</strong></td>
-                          <td>{disciplina.nome}</td>
-                          <td>{disciplina.creditos}</td>
-                          <td>{disciplina.semestre}º</td>
-                          <td>{getPreRequisitoNomes(disciplina, curso)}</td>
-                          <td>
-                            <button 
-                              className="btn btn-sm btn-outline-secondary me-1"
-                              title="Editar"
-                              onClick={() => handleShowModal('editar', curso.id, disciplina)}
-                            >
-                              <i className="bi bi-pencil-fill"></i>
-                            </button>
-                            <button 
-                              className="btn btn-sm btn-outline-danger"
-                              title="Excluir"
-                              onClick={() => handleExcluirDisciplina(curso.id, disciplina.id)}
-                            >
-                              <i className="bi bi-trash-fill"></i>
-                            </button>
-                          </td>
+      {/* --- ACORDEÃO DE CURSOS --- */}
+      <div className="accordion shadow-sm" id="accordionCursos">
+        {loading ? (
+          <div className="text-center p-5">Carregando cursos...</div>
+        ) : (
+          cursos.map(curso => (
+            <div className="accordion-item border-0 mb-2 shadow-sm" key={curso.id}>
+              <h2 className="accordion-header">
+                <button className="accordion-button collapsed bg-white text-dark" type="button" data-bs-toggle="collapse" data-bs-target={`#collapse-${curso.id}`}>
+                  <div className="d-flex justify-content-between w-100 align-items-center me-3">
+                    <span>
+                      <strong className="text-primary me-2">[{curso.codigo}]</strong> 
+                      {curso.nome} 
+                      <small className="text-muted ms-3">Coord: {curso.coordenador.nome}</small>
+                    </span>
+                    <span className="badge bg-primary-subtle text-primary rounded-pill">
+                      {curso.disciplinas?.length || 0} Disciplinas
+                    </span>
+                  </div>
+                </button>
+              </h2>
+              
+              <div id={`collapse-${curso.id}`} className="accordion-collapse collapse" data-bs-parent="#accordionCursos">
+                <div className="accordion-body bg-light-subtle">
+                  <div className="d-flex justify-content-between align-items-center mb-3">
+                    <h6 className="mb-0 fw-bold"><i className="bi bi-list-stars me-2"></i>Disciplinas do Curso</h6>
+                    <button className="btn btn-sm btn-outline-primary" onClick={() => handleOpenModal('nova', curso.id)}>
+                      <i className="bi bi-plus-lg me-1"></i> Adicionar Disciplina
+                    </button>
+                  </div>
+
+                  <div className="table-responsive rounded bg-white shadow-sm">
+                    <table className="table table-hover align-middle mb-0">
+                      <thead className="table-light">
+                        <tr className="small">
+                          <th>CÓDIGO</th>
+                          <th>NOME</th>
+                          <th>CARGA HORÁRIA</th>
+                          <th>SEMESTRE</th>
+                          <th className="text-end">AÇÕES</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {curso.disciplinas?.map(disc => (
+                          <tr key={disc.id}>
+                            <td className="fw-bold text-secondary">{disc.codigo}</td>
+                            <td>{disc.nome}</td>
+                            <td>{disc.cargaHoraria}h</td>
+                            <td>{disc.semestreIdeal}º</td>
+                            <td className="text-end">
+                              <button className="btn btn-link btn-sm p-0 me-3 text-info" onClick={() => handleVisualizarDisciplina(disc)} title="Visualizar">
+                                <i className="bi bi-eye"></i>
+                              </button>
+                              <button className="btn btn-link btn-sm p-0 me-3" onClick={() => handleOpenModal('editar', curso.id, disc)}>
+                                <i className="bi bi-pencil"></i>
+                              </button>
+                              <button className="btn btn-link btn-sm p-0 text-danger" onClick={() => handleExcluirDisciplina(disc.id)}>
+                                <i className="bi bi-trash"></i>
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
-      {/* --- 2. MODAL DE ADICIONAR/EDITAR DISCIPLINA --- */}
+      {/* --- MODAL DISCIPLINA --- */}
       {showModal && (
         <>
-          <div className="modal fade show" style={{ display: 'block' }} tabIndex="-1">
-            <div className="modal-dialog modal-lg modal-dialog-centered">
-              <div className="modal-content">
+          <div className="modal fade show d-block" tabIndex="-1">
+            <div className="modal-dialog modal-dialog-centered">
+              <div className="modal-content border-0 shadow">
                 <form onSubmit={handleSalvarDisciplina}>
-                  
-                  <div className="modal-header">
+                  <div className="modal-header bg-primary text-white">
                     <h5 className="modal-title">
-                      {modalType === 'nova' ? 'Adicionar Nova Disciplina' : `Editar: ${formData.nome}`}
+                      {isVisualizando ? 'Detalhes da Disciplina' : (modalType === 'nova' ? 'Nova Disciplina' : 'Editar Disciplina')}
                     </h5>
-                    <button type="button" className="btn-close" onClick={handleCloseModal}></button>
+                    <button type="button" className="btn-close btn-close-white" onClick={() => setShowModal(false)}></button>
                   </div>
-                  
                   <div className="modal-body">
-                    <div className="row g-3">
-                      {/* Coluna 1 */}
-                      <div className="col-md-7">
-                        <div className="mb-3">
-                          <label htmlFor="nome" className="form-label">Nome da Disciplina</label>
-                          <input type="text" className="form-control" id="nome" name="nome" value={formData.nome} onChange={handleInputChange} required />
-                        </div>
-                        <div className="row g-2">
-                          <div className="col-md-6 mb-3">
-                            <label htmlFor="codigo" className="form-label">Código</label>
-                            <input type="text" className="form-control" id="codigo" name="codigo" value={formData.codigo} onChange={handleInputChange} required />
-                          </div>
-                          <div className="col-md-3 mb-3">
-                            <label htmlFor="creditos" className="form-label">Créditos</label>
-                            <input type="number" className="form-control" id="creditos" name="creditos" value={formData.creditos} onChange={handleInputChange} required />
-                          </div>
-                          <div className="col-md-3 mb-3">
-                            <label htmlFor="semestre" className="form-label">Semestre</label>
-                            <input type="number" className="form-control" id="semestre" name="semestre" value={formData.semestre} onChange={handleInputChange} required />
-                          </div>
-                        </div>
-                        <div className="mb-3">
-                          <label htmlFor="ementa" className="form-label">Ementa (Descrição)</label>
-                          <textarea className="form-control" id="ementa" name="ementa" rows="4" value={formData.ementa} onChange={handleInputChange}></textarea>
-                        </div>
+                    <div className="mb-3">
+                      <label className="form-label small fw-bold">Nome da Disciplina</label>
+                      <input type="text" name="nome" className="form-control" value={formData.nome} onChange={handleInputChange} disabled={isVisualizando} required />
+                    </div>
+                    <div className="row">
+                      <div className="col-md-6 mb-3">
+                        <label className="form-label small fw-bold">Código</label>
+                        <input type="text" name="codigo" className="form-control" value={formData.codigo} onChange={handleInputChange} disabled={isVisualizando} required />
                       </div>
-                      
-                      {/* Coluna 2 (Pré-requisitos) */}
-                      <div className="col-md-5">
-                        <div className="mb-3">
-                          <label htmlFor="preRequisitos" className="form-label">Pré-requisitos</label>
-                          <select 
-                            multiple
-                            className="form-select" 
-                            id="preRequisitos"
-                            name="preRequisitos"
-                            size="12"
-                            value={formData.preRequisitos}
-                            onChange={handleMultiSelectChange}
-                          >
-                            <option value="" disabled>Segure Ctrl (ou Cmd) para selecionar</option>
-                            {/* Lista as disciplinas do curso, exceto ela mesma */}
-                            {cursos.find(c => c.id === currentCursoId).disciplinas
-                              .filter(d => d.id !== formData.id) // Não pode ser pré-requisito de si mesma
-                              .map(d => (
-                                <option key={d.id} value={d.id}>{d.nome}</option>
-                              ))
-                            }
-                          </select>
-                        </div>
+                      <div className="col-md-3 mb-3">
+                        <label className="form-label small fw-bold">Carga H.</label>
+                        <input type="number" name="carga_horaria" className="form-control" value={formData.cargaHoraria} onChange={handleInputChange} disabled={isVisualizando} required />
+                      </div>
+                      <div className="col-md-3 mb-3">
+                        <label className="form-label small fw-bold">Semestre</label>
+                        <input type="number" name="semestre" className="form-control" value={formData.semestreIdeal} onChange={handleInputChange} disabled={isVisualizando} required />
                       </div>
                     </div>
+                    <div className="mb-3">
+                      <label className="form-label small fw-bold">Ementa / Descrição</label>
+                      <textarea name="ementa" className="form-control" rows="3" value={formData.ementa} onChange={handleInputChange} disabled={isVisualizando}></textarea>
+                    </div>
                   </div>
-                  
                   <div className="modal-footer">
-                    <button type="button" className="btn btn-secondary" onClick={handleCloseModal}>Cancelar</button>
-                    <button type="submit" className="btn btn-primary">Salvar Disciplina</button>
+                    <button type="button" className="btn btn-light" onClick={() => setShowModal(false)}>
+                      {isVisualizando ? 'Fechar' : 'Cancelar'}
+                    </button>
+                    {!isVisualizando && <button type="submit" className="btn btn-primary">Salvar Alterações</button>}
                   </div>
-
                 </form>
               </div>
             </div>
@@ -336,6 +293,47 @@ export default function GerenciarCursos() {
           <div className="modal-backdrop fade show"></div>
         </>
       )}
-    </>
+
+      {/* --- MODAL NOVO CURSO --- */}
+      {showModalCurso && (
+        <>
+          <div className="modal fade show d-block" tabIndex="-1">
+            <div className="modal-dialog modal-dialog-centered">
+              <div className="modal-content border-0 shadow">
+                <form onSubmit={handleSalvarCurso}>
+                  <div className="modal-header bg-primary text-white">
+                    <h5 className="modal-title">Novo Curso</h5>
+                    <button type="button" className="btn-close btn-close-white" onClick={() => setShowModalCurso(false)}></button>
+                  </div>
+                  <div className="modal-body">
+                    <div className="mb-3">
+                      <label className="form-label small fw-bold">Nome do Curso</label>
+                      <input type="text" name="nome" className="form-control" value={formDataCurso.nome} onChange={handleInputChangeCurso} required />
+                    </div>
+                    <div className="mb-3">
+                      <label className="form-label small fw-bold">Código</label>
+                      <input type="text" name="codigo" className="form-control" value={formDataCurso.codigo} onChange={handleInputChangeCurso} required />
+                    </div>
+                    <div className="mb-3">
+                      <label className="form-label small fw-bold">Email do Coordenador</label>
+                      <input type="email" name="email_coordenador" className="form-control" value={formDataCurso.email_coordenador} onChange={handleInputChangeCurso} required />
+                    </div>
+                    <div className="mb-3">
+                      <label className="form-label small fw-bold">Descrição</label>
+                      <textarea name="descricao" className="form-control" rows="3" value={formDataCurso.descricao} onChange={handleInputChangeCurso}></textarea>
+                    </div>
+                  </div>
+                  <div className="modal-footer">
+                    <button type="button" className="btn btn-light" onClick={() => setShowModalCurso(false)}>Cancelar</button>
+                    <button type="submit" className="btn btn-primary">Salvar Curso</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+          <div className="modal-backdrop fade show"></div>
+        </>
+      )}
+    </div>
   );
 }

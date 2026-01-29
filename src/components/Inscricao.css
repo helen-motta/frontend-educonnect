@@ -1,0 +1,17 @@
+.custom-input {
+  border-radius: 10px;
+  border: 2px solid #e6e0f8;
+  padding: 10px 15px;
+  transition: all 0.3s;
+}
+
+.custom-input:focus {
+  border-color: #d8f17b;
+  box-shadow: 0 0 8px rgba(155, 137, 217, 0.2);
+  outline: none;
+}
+
+/* Garante que o fundo creme ocupe a tela toda */
+.welcome-wrapper {
+  min-height: 100vh;
+}

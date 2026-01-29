@@ -50,12 +50,9 @@ a {
 
 
 [data-bs-theme="dark"] {
-  --bs-body-bg: #1f1e30; /* O valor RGB de #f8f9fa */
+  --bs-body-bg: #1f1e30; 
 }
 
-/* Em Dashboard.css */
-
-/* Define uma altura máxima e adiciona a barra de rolagem */
 .dropdown-notifications .dropdown-scroll-area {
   max-height: 400px;
   overflow-y: auto;

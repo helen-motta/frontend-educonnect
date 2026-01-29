@@ -48,8 +48,6 @@ const MOCK_HORARIOS_SLOTS = [
 // 4. A Lista de Turmas já criadas (O STATE principal)
 const MOCK_TURMAS_INICIAIS = [
   { id: 't1', disciplinaId: 'es101', nomeTurma: 'Turma A', professorId: 'p1', vagas: 50, sala: 'B-102', horarios: ['SEG 08:00-09:50', 'QUA 08:00-09:50'] },
-  { id: 't2', disciplinaId: 'es102', nomeTurma: 'Turma A', professorId: 'p2', vagas: 40, sala: 'C-201', horarios: ['TER 10:00-11:50', 'QUI 10:00-11:50'] },
-  { id: 't3', disciplinaId: 'es101', nomeTurma: 'Turma B (Noturno)', professorId: 'p1', vagas: 50, sala: 'B-103', horarios: ['SEG 19:00-20:50', 'QUA 19:00-20:50'] },
 ];
 
 // 5. Estado inicial do formulário do modal

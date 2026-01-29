@@ -1,0 +1,50 @@
+.wrapper {
+    min-height: 100vh;
+    background-color: #f9f9fa;
+}
+
+.toast-container {
+    z-index: 1055;
+}
+
+.logo-container img {
+    max-width: 200px;
+    height: auto;
+    filter: invert(1);
+}
+
+.form-container {
+    width: 100%;
+    max-width: 500px;
+    background: white;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+    border-radius: 1.5rem;
+    padding: 2rem;
+}
+
+.form-title {
+    font-weight: bold;
+    margin-bottom: 1.5rem;
+}
+
+.submit-button {
+    background-color: #d8f17b;
+    color: #222;
+    border: none;
+    padding: 12px;
+    font-weight: bold;
+}
+
+.submit-button:hover {
+    background-color: #c4dd66;
+    color: #222;
+}
+
+.back-button {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.back-button:hover {
+    color: #d8f17b;
+}

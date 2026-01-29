@@ -38,7 +38,6 @@ export default function InicioProfessor() {
 
   return (
     <>
-      <h2 className="mb-4">Dashboard do Professor</h2>
 
       {/* --- LINHA 1: Foco Principal (O que fazer agora) --- */}
       <div className="row g-4 mb-4">
@@ -48,7 +47,6 @@ export default function InicioProfessor() {
           <div className="card shadow-sm border-0 h-100">
             <div className="card-header bg-white py-3">
               <h5 className="mb-0">
-                <i className="bi bi-bell-fill me-2 text-primary"></i>
                 Próxima Aula
               </h5>
             </div>
@@ -58,13 +56,11 @@ export default function InicioProfessor() {
                 <h3 className="card-title mb-1">{proximaAula.disciplina}</h3>
                 <p className="fs-5 text-muted">
                   <i className="bi bi-geo-alt-fill me-2"></i>Sala: {proximaAula.sala}
-                  <span className="mx-3">|</span>
-                  <i className="bi bi-people-fill me-2"></i>{proximaAula.totalAlunos} Alunos
                 </p>
               </div>
               <div className="mt-3">
                 <Link to="/dashboard/minhas-turmas" className="btn btn-primary">
-                  <i className="bi bi-people-fill me-2"></i>Gerenciar Turma
+                  <i></i>Gerenciar Turma
                 </Link>
               </div>
             </div>
@@ -76,7 +72,7 @@ export default function InicioProfessor() {
           <div className="card shadow-sm border-0 h-100">
             <div className="card-header bg-white py-3">
               <h5 className="mb-0">
-                <i className="bi bi-clipboard-check-fill me-2 text-warning"></i>
+                <i></i>
                 Ações Pendentes
               </h5>
             </div>
@@ -91,7 +87,7 @@ export default function InicioProfessor() {
                       to={acao.link} 
                       className="list-group-item list-group-item-action"
                     >
-                      <i className="bi bi-pencil-square me-2"></i>
+                      <i></i>
                       {acao.msg}
                     </Link>
                   ))
@@ -113,7 +109,7 @@ export default function InicioProfessor() {
           <div className="card shadow-sm border-0 h-100">
             <div className="card-header bg-white py-3">
               <h5 className="mb-0">
-                <i className="bi bi-megaphone-fill me-2"></i>
+                <i></i>
                 Últimos Comunicados Enviados
               </h5>
             </div>
@@ -139,7 +135,7 @@ export default function InicioProfessor() {
           <div className="card shadow-sm border-0 h-100">
             <div className="card-header bg-white py-3">
               <h5 className="mb-0">
-                <i className="bi bi-calendar-event-fill me-2 text-primary"></i>
+                <i></i>
                 Próximas Avaliações
               </h5>
             </div>

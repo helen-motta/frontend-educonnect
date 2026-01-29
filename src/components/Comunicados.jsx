@@ -6,7 +6,6 @@ import React, { useState } from 'react';
 const MOCK_TURMAS = [
   { id: 't1', nome: 'Cálculo I - Turma A' },
   { id: 't2', nome: 'Física II - Turma B' },
-  { id: 't3', nome: 'Programação I - Turma C' },
 ];
 
 // 2. O histórico de comunicados (para a lista)

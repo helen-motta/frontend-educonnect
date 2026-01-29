@@ -1,56 +1,12 @@
-import React, { useState, useMemo } from 'react';
-
-// --- MOCK DE DADOS (Simula o que viria do Banco de Dados) ---
-
-// 1. Alunos (para buscar nomes)
-const MOCK_ALUNOS = {
-  '101': { nome: 'Ana Silva', ra: 'RA123456' },
-  '102': { nome: 'Bruno Costa', ra: 'RA123457' },
-};
-
-// 2. Os Requerimentos Solicitados
-const MOCK_REQUERIMENTOS_INICIAIS = [
-  { 
-    id: 'req501', 
-    alunoId: '101', 
-    tipo: 'Aproveitamento de Matéria', 
-    data: '10/11/2025', 
-    status: 'Pendente',
-    justificativa: 'Já cursei Cálculo I em outra instituição. Segue anexa a ementa e o histórico.',
-    anexos: [
-      { nome: 'historico_externo.pdf', url: '#' },
-      { nome: 'ementa_calculo_externo.pdf', url: '#' }
-    ],
-    parecer: ''
-  },
-  { 
-    id: 'req502', 
-    alunoId: '102', 
-    tipo: 'Quebra de Pré-requisito', 
-    data: '08/11/2025', 
-    status: 'Pendente',
-    justificativa: 'Gostaria de cursar "Cálculo II" junto com "Cálculo I", pois tenho facilidade com a matéria.',
-    anexos: [],
-    parecer: ''
-  },
-  { 
-    id: 'req499', 
-    alunoId: '101', 
-    tipo: 'Ajuste de Matrícula (Fora do Prazo)', 
-    data: '01/11/2025', 
-    status: 'Concluído (Aceito)',
-    justificativa: '...',
-    anexos: [],
-    parecer: 'Ajuste de matrícula aprovado e realizado no sistema.'
-  },
-];
-// -----------------------------------------------------------------
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import api from './../api';
 
 export default function GerenciarRequerimentos() {
 
   // --- STATES DO COMPONENTE ---
   const [view, setView] = useState('lista'); // 'lista' ou 'revisar'
-  const [requerimentos, setRequerimentos] = useState(MOCK_REQUERIMENTOS_INICIAIS);
+  const [requerimentos, setRequerimentos] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [reqSelecionado, setReqSelecionado] = useState(null); // O requerimento sendo revisado
   
   // States dos Filtros
@@ -60,13 +16,33 @@ export default function GerenciarRequerimentos() {
   const [novoStatus, setNovoStatus] = useState('');
   const [textoParecer, setTextoParecer] = useState('');
 
+  // Carregar requerimentos do backend
+  const carregarRequerimentos = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await api.get('/requerimentos', {
+        params: {
+          status: filtroStatus === 'Todos' ? undefined : filtroStatus
+        }
+      });
+      // O backend retorna a resposta com paginação, extrair o array de requerimentos
+      const reqs = Array.isArray(response.data) ? response.data : (response.data?.data || []);
+      setRequerimentos(reqs);
+    } catch (error) {
+      console.error("Erro ao carregar requerimentos:", error);
+      alert("Erro ao carregar requerimentos. Tente novamente.");
+      setRequerimentos([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [filtroStatus]);
+
+  useEffect(() => {
+    carregarRequerimentos();
+  }, [carregarRequerimentos]);
+
   // --- LÓGICA DE FILTRAGEM ---
-  const requerimentosFiltrados = useMemo(() => {
-    return requerimentos.filter(r => {
-      if (filtroStatus === 'Todos') return true;
-      return r.status === filtroStatus;
-    });
-  }, [requerimentos, filtroStatus]);
+  // Filtragem é feita no backend, apenas repassamos os requerimentos
 
 
   // --- HANDLERS ---
@@ -88,32 +64,38 @@ export default function GerenciarRequerimentos() {
   /**
    * Passo 2: Coordenador salva o parecer
    */
-  const handleSalvarParecer = (e) => {
+  const handleSalvarParecer = async (e) => {
     e.preventDefault();
     if (!novoStatus || !textoParecer) {
       alert('Por favor, selecione um novo status e escreva um parecer.');
       return;
     }
     
-    // Atualiza o "banco de dados" (o state principal)
-    setRequerimentos(requerimentos.map(r => 
-      r.id === reqSelecionado.id 
-        ? { ...r, status: novoStatus, parecer: textoParecer } 
-        : r
-    ));
-    
-    alert('Parecer salvo e aluno notificado (Simulação)!');
-    
-    // Volta para a lista
-    setView('lista');
-    setReqSelecionado(null);
+    try {
+      await api.put(`/requerimentos/${reqSelecionado.id}`, {
+        status: novoStatus,
+        parecer: textoParecer
+      });
+      
+      // Atualiza o state local
+      setRequerimentos(requerimentos.map(r => 
+        r.id === reqSelecionado.id 
+          ? { ...r, status: novoStatus, parecer: textoParecer } 
+          : r
+      ));
+      
+      alert('Parecer salvo e aluno notificado!');
+      
+      // Volta para a lista
+      setView('lista');
+      setReqSelecionado(null);
+    } catch (error) {
+      console.error("Erro ao salvar parecer:", error);
+      alert("Erro ao salvar parecer. Tente novamente.");
+    }
   };
   
-  const getAlunoNome = (alunoId) => MOCK_ALUNOS[alunoId]?.nome || 'Aluno Desconhecido';
   
-  
-  // --- FUNÇÕES DE RENDERIZAÇÃO ---
-
   // Tela 1: Lista/Triagem (A Caixa de Entrada)
   const renderListaRequerimentos = () => (
     <>
@@ -146,57 +128,65 @@ export default function GerenciarRequerimentos() {
       {/* --- 2. TABELA DE REQUERIMENTOS --- */}
       <div className="card shadow-sm border-0">
         <div className="card-body p-0">
-          <div className="table-responsive">
-            <table className="table table-hover align-middle mb-0">
-              <thead>
-                <tr>
-                  <th scope="col">Status</th>
-                  <th scope="col">Aluno</th>
-                  <th scope="col">Tipo de Solicitação</th>
-                  <th scope="col">Data</th>
-                  <th scope="col">Ação</th>
-                </tr>
-              </thead>
-              <tbody>
-                {requerimentosFiltrados.length === 0 && (
-                  <tr><td colSpan="5" className="text-center p-4 text-muted">Nenhum requerimento encontrado.</td></tr>
-                )}
-                
-                {requerimentosFiltrados.map(req => (
-                  <tr key={req.id}>
-                    {/* Status (Badge) */}
-                    <td>
-                      <span className={`badge ${
-                        req.status === 'Pendente' ? 'bg-warning text-dark' :
-                        req.status.includes('Aceito') ? 'bg-success' :
-                        req.status.includes('Recusado') ? 'bg-danger' : 'bg-secondary'
-                      }`}>
-                        {req.status}
-                      </span>
-                    </td>
-                    {/* Aluno */}
-                    <td>
-                      <strong>{getAlunoNome(req.alunoId)}</strong>
-                      <br/><small className="text-muted">RA: {MOCK_ALUNOS[req.alunoId]?.ra}</small>
-                    </td>
-                    {/* Tipo */}
-                    <td>{req.tipo}</td>
-                    {/* Data */}
-                    <td>{req.data}</td>
-                    {/* Ação */}
-                    <td>
-                      <button 
-                        className="btn btn-primary"
-                        onClick={() => handleRevisar(req.id)}
-                      >
-                        <i className="bi bi-search me-1"></i> Revisar
-                      </button>
-                    </td>
+          {loading ? (
+            <div className="text-center p-5">
+              <div className="spinner-border" role="status">
+                <span className="visually-hidden">Carregando...</span>
+              </div>
+            </div>
+          ) : (
+            <div className="table-responsive">
+              <table className="table table-hover align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th scope="col">Status</th>
+                    <th scope="col">Aluno</th>
+                    <th scope="col">Tipo de Solicitação</th>
+                    <th scope="col">Data</th>
+                    <th scope="col">Ação</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {requerimentos.length === 0 && (
+                    <tr><td colSpan="5" className="text-center p-4 text-muted">Nenhum requerimento encontrado.</td></tr>
+                  )}
+                  
+                  {requerimentos.map(req => (
+                    <tr key={req.id}>
+                      {/* Status (Badge) */}
+                      <td>
+                        <span className={`badge ${
+                          req.status === 'Pendente' ? 'bg-warning text-dark' :
+                          req.status.includes('Aceito') ? 'bg-success' :
+                          req.status.includes('Recusado') ? 'bg-danger' : 'bg-secondary'
+                        }`}>
+                          {req.status}
+                        </span>
+                      </td>
+                      {/* Aluno */}
+                      <td>
+                        <strong>{req.aluno?.nome || 'Aluno Desconhecido'}</strong>
+                        <br/><small className="text-muted">RA: {req.aluno?.ra || 'N/A'}</small>
+                      </td>
+                      {/* Tipo */}
+                      <td>{req.tipo}</td>
+                      {/* Data */}
+                      <td>{new Date(req.data).toLocaleDateString('pt-BR')}</td>
+                      {/* Ação */}
+                      <td>
+                        <button 
+                          className="btn btn-primary"
+                          onClick={() => handleRevisar(req.id)}
+                        >
+                          <i className="bi bi-search me-1"></i> Revisar
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
     </>
@@ -210,7 +200,7 @@ export default function GerenciarRequerimentos() {
         <i className="bi bi-arrow-left me-1"></i>Voltar para a Caixa de Entrada
       </button>
       <h2 className="mb-1">Revisar Requerimento</h2>
-      <p className="text-muted fs-5">De: {getAlunoNome(reqSelecionado.alunoId)}</p>
+      <p className="text-muted fs-5">De: {reqSelecionado.aluno?.nome || 'Aluno Desconhecido'}</p>
       
       <div className="row g-4">
         {/* Coluna 1: Dados da Solicitação (Read-Only) */}
@@ -221,18 +211,18 @@ export default function GerenciarRequerimentos() {
             </div>
             <div className="card-body">
               <p><strong>Tipo:</strong> {reqSelecionado.tipo}</p>
-              <p><strong>Data:</strong> {reqSelecionado.data}</p>
+              <p><strong>Data:</strong> {new Date(reqSelecionado.data).toLocaleDateString('pt-BR')}</p>
               
               <p className="fw-bold mb-1">Justificativa do Aluno:</p>
               <p className="p-3 bg-light rounded">{reqSelecionado.justificativa}</p>
               
-              {reqSelecionado.anexos.length > 0 && (
+              {reqSelecionado.anexos && reqSelecionado.anexos.length > 0 && (
                 <>
                   <p className="fw-bold mb-1">Documentos Anexos:</p>
                   <div className="list-group">
                     {reqSelecionado.anexos.map(anexo => (
                       <a 
-                        key={anexo.nome} 
+                        key={anexo.id} 
                         href={anexo.url} 
                         target="_blank" 
                         rel="noreferrer"
