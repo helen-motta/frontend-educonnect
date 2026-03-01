@@ -5,7 +5,7 @@ export default function MenuProfessor() {
   return (
     <>
       <li className="nav-item mb-2">
-        <NavLink className="nav-link" to="/dashboard/inicioprofessor" end>
+        <NavLink className="nav-link" to="/dashboard/inicio" end>
           <i className="bi bi-house-door-fill me-2"></i>Início
         </NavLink>
       </li>

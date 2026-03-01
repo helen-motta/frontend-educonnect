@@ -3,9 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
-import Inicio from './components/Inicio';
-import InicioProfessor from './components/InicioProfessor';
-import InicioAdm from './components/InicioAdm';
+import InicioRouter from './components/InicioRouter';
 import Requerimentos from './components/Requerimentos';
 import Matricula from './components/Matricula';
 import Horarios from './components/Horarios';
@@ -21,7 +19,6 @@ import LogsSistema from './components/LogsSistema';
 import GerenciarTurmas from './components/GerenciarTurmas';
 import GerenciarRequerimentos from './components/GerenciarRequerimentos';
 import ConfiguracoesPortal from './components/ConfiguracoesPortal';
-import InicioCoordenador from './components/InicioCoordenador';
 import CalendarioProfessor from './components/CalendarioProfessor';
 import Perfil from './components/Perfil';
 import ConfiguracoesPerfil from './components/ConfiguracoesPerfil';
@@ -31,7 +28,6 @@ import RedefinirSenha from './components/RedefinirSenha';
 import { ThemeProvider } from './components/ThemeContext';
 import { AuthProvider } from './components/AuthContext';
 import PrivateRoute from './components/PrivateRoute';
-
 
 function App() {
   return (
@@ -45,10 +41,7 @@ function App() {
         <Route path="/inscricao" element={<Inscricao />} />
 
         <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>}>
-          <Route path="inicio" element={<Inicio />} />
-          <Route path="inicioprofessor" element={<InicioProfessor />} />
-          <Route path="inicio-coordenador" element={<InicioCoordenador />} />
-          <Route path="inicioadm" element={<InicioAdm />} />
+          <Route path="inicio" element={<InicioRouter />} />
           <Route path="perfil" element={<Perfil />} />
           <Route path="configuracoes" element={<ConfiguracoesPerfil />} />
           <Route path="requerimentos" element={<Requerimentos />} />
@@ -66,13 +59,11 @@ function App() {
           <Route path="gerenciar-requerimentos" element={<GerenciarRequerimentos />} />
           <Route path="configuracoes-portal" element={<ConfiguracoesPortal />} />
           <Route path="calendario-professor" element={<CalendarioProfessor />} />
-
-        
         </Route>
 
         <Route path="*" element={<Navigate to="/boas-vindas" replace />} />
       </Routes>
-      </AuthProvider>
+    </AuthProvider>
     </BrowserRouter>
     </ThemeProvider>
   );

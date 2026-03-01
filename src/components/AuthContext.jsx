@@ -4,7 +4,8 @@ import { useNavigate } from 'react-router-dom';
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null); 
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -12,33 +13,16 @@ export const AuthProvider = ({ children }) => {
     if (savedUser) {
       setUser(JSON.parse(savedUser));
     }
+    setLoading(false);
   }, []);
 
   const login = (userDataFromApi) => {
-    
     setUser(userDataFromApi);
 
     localStorage.setItem('@EduConnect:user', JSON.stringify(userDataFromApi));
     localStorage.setItem('@EduConnect:token', userDataFromApi.token);
 
-    const role = userDataFromApi.role?.toLowerCase() || userDataFromApi.user?.role?.toLowerCase();
-
-    switch (role) {
-      case 'aluno':
-        navigate('/dashboard/inicio');
-        break;
-      case 'professor':
-        navigate('/dashboard/inicioprofessor');
-        break;
-      case 'admin':
-        navigate('/dashboard/inicioadm');
-        break;
-      case 'coordenador':
-        navigate('/dashboard/inicio-coordenador');
-        break;
-      default:
-        navigate('/dashboard/inicio'); // fallback
-    }
+    navigate('/dashboard/inicio');
   };
 
   const logout = () => {
@@ -50,9 +34,10 @@ export const AuthProvider = ({ children }) => {
 
   const value = {
     user,
+    loading,
     login,
     logout,
-    isAuthenticated: user !== null 
+    isAuthenticated: user !== null
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

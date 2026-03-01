@@ -17,7 +17,7 @@ export default function Login() {
   const [showModal, setShowModal] = useState(false); 
   const [resetEmail, setResetEmail] = useState('');
 
-  const API_URL = process.env.REACT_APP_API_URL;
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const [toast, setToast] = useState({ show: false, message: '', type: 'danger' });
 

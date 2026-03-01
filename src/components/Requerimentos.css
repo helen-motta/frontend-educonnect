@@ -1,0 +1,112 @@
+.requerimentos-wrapper {
+  padding: 2rem;
+  background-color: #ffffff;
+}
+
+.titulo-pagina {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 2rem;
+}
+
+.subtitulo {
+  font-weight: 700;
+  color: #444;
+  margin-bottom: 0.5rem;
+}
+
+.descricao-secao {
+  color: #777;
+  font-size: 0.95rem;
+}
+
+/* Cards de Download (Estilo image_fbc77e) */
+.card-download {
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  height: 100%;
+  transition: transform 0.2s;
+}
+
+.card-download:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+}
+
+.icon-container {
+  font-size: 2.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.icon-container.blue { color: #3b82f6; }
+.icon-container.green { color: #10b981; }
+
+.card-download h5 {
+  font-weight: 700;
+  color: #333;
+}
+
+.card-download p {
+  font-size: 0.85rem;
+  color: #666;
+  min-height: 40px;
+}
+
+.btn-gerar {
+  background-color: #d9f99d; /* Verde limão da paleta EduConnect */
+  border: none;
+  color: #3f6212;
+  font-weight: 700;
+  padding: 0.6rem 2rem;
+  border-radius: 8px;
+  margin-top: 1rem;
+  transition: all 0.3s ease;
+}
+
+.btn-gerar:hover {
+  background-color: #bef264;
+  transform: scale(1.05);
+}
+
+/* Seção de Solicitações (Lista aumentada) */
+.card-solicitacoes {
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 2rem;
+  max-width: 600px;
+}
+
+.subtitulo-solicitacao {
+  font-weight: 700;
+  color: #333;
+}
+
+.item-solicitacao {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.2rem 0; /* Espaçamento aumentado */
+  font-size: 1.15rem; /* Fonte aumentada */
+  font-weight: 500;
+  color: #555;
+  background: none;
+  border: none;
+  border-bottom: 1px solid #f0f0f0;
+  text-align: left;
+  transition: padding-left 0.3s;
+}
+
+.item-solicitacao:hover {
+  color: #9b89d9;
+  padding-left: 10px;
+}
+
+.item-solicitacao i {
+  font-size: 0.9rem;
+  color: #ccc;
+}

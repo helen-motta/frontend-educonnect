@@ -18,6 +18,7 @@ export default function GerenciarRequerimentos() {
 
   // Carregar requerimentos do backend
   const carregarRequerimentos = useCallback(async () => {
+    console.log(requerimentos);
     setLoading(true);
     try {
       const response = await api.get('/requerimentos', {
@@ -165,13 +166,13 @@ export default function GerenciarRequerimentos() {
                       </td>
                       {/* Aluno */}
                       <td>
-                        <strong>{req.aluno?.nome || 'Aluno Desconhecido'}</strong>
-                        <br/><small className="text-muted">RA: {req.aluno?.ra || 'N/A'}</small>
+                        <strong>{req.usuario?.nome || 'Aluno Desconhecido'}</strong>
+                        <br/><small className="text-muted">RA: {req.usuario?.ra || 'N/A'}</small>
                       </td>
                       {/* Tipo */}
-                      <td>{req.tipo}</td>
+                      <td>{req.tipoSolicitacao}</td>
                       {/* Data */}
-                      <td>{new Date(req.data).toLocaleDateString('pt-BR')}</td>
+                      <td>{new Date(req.dataAbertura).toLocaleDateString('pt-BR')}</td>
                       {/* Ação */}
                       <td>
                         <button 
@@ -200,7 +201,7 @@ export default function GerenciarRequerimentos() {
         <i className="bi bi-arrow-left me-1"></i>Voltar para a Caixa de Entrada
       </button>
       <h2 className="mb-1">Revisar Requerimento</h2>
-      <p className="text-muted fs-5">De: {reqSelecionado.aluno?.nome || 'Aluno Desconhecido'}</p>
+      <p className="text-muted fs-5">De: {reqSelecionado.usuario?.nome || 'Aluno Desconhecido'}</p>
       
       <div className="row g-4">
         {/* Coluna 1: Dados da Solicitação (Read-Only) */}
@@ -210,11 +211,11 @@ export default function GerenciarRequerimentos() {
               <h5 className="mb-0">Solicitação do Aluno</h5>
             </div>
             <div className="card-body">
-              <p><strong>Tipo:</strong> {reqSelecionado.tipo}</p>
-              <p><strong>Data:</strong> {new Date(reqSelecionado.data).toLocaleDateString('pt-BR')}</p>
+              <p><strong>Tipo:</strong> {reqSelecionado.tipoSolicitacao}</p>
+              <p><strong>Data:</strong> {new Date(reqSelecionado.dataAbertura).toLocaleDateString('pt-BR')}</p>
               
               <p className="fw-bold mb-1">Justificativa do Aluno:</p>
-              <p className="p-3 bg-light rounded">{reqSelecionado.justificativa}</p>
+              <p className="p-3 bg-light rounded">{reqSelecionado.observacao}</p>
               
               {reqSelecionado.anexos && reqSelecionado.anexos.length > 0 && (
                 <>

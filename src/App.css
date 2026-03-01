@@ -16,9 +16,6 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-button {
-  font-size: 0.6rem;
-}
 
 .btn-primary {
   background-color: var(--color-primary)!important;

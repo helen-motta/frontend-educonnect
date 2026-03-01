@@ -5,7 +5,7 @@ export default function MenuCoordenador() {
   return (
     <>
       <li className="nav-item mb-2">
-        <NavLink className="nav-link" to="/dashboard/inicio-coordenador" end>
+        <NavLink className="nav-link" to="/dashboard/inicio" end>
           <i className="bi bi-house-door-fill me-2"></i>Início
         </NavLink>
       </li>
@@ -21,7 +21,7 @@ export default function MenuCoordenador() {
       </li>
         <li className="nav-item mb-2">
         <NavLink className="nav-link" to="/dashboard/gerenciar-turmas">
-          <i className="bi bi-megaphone-fill me-2"></i>Turmas
+          <i className="bi bi-person-video3"></i> Turmas
         </NavLink>
       </li>
     </>
