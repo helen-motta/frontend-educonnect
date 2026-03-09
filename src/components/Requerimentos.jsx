@@ -1,97 +1,150 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import api from './../api';
 import './Requerimentos.css';
 
+const TIPOS_REQUERIMENTO = [
+  { id: 'trancamento', nome: 'Trancamento de Matrícula', icone: 'bi-pause-circle' },
+  { id: 'quebra', nome: 'Quebra de Pré-requisito', icone: 'bi-diagram-3' },
+  { id: 'aproveitamento', nome: 'Aproveitamento de Estudos', icone: 'bi-mortarboard' },
+  { id: 'outros', nome: 'Outras Solicitações', icone: 'bi-chat-left-dots' },
+];
+
+const MOCK_SOLICITACOES = [
+  { id: 101, tipo: 'Passe Escolar', data: '02/03/2024', status: 'Concluído', cor: 'success' },
+  { id: 102, tipo: 'Trancamento de Matrícula', data: '04/03/2024', status: 'Em Análise', cor: 'warning' },
+];
+
 export default function Requerimentos() {
+  const [abaAtiva, setAbaAtiva] = useState('novo');
+  const [tipoSelecionado, setTipoSelecionado] = useState(null);
+  const [observacao, setObservacao] = useState('');
+  const [arquivo, setArquivo] = useState(null);
+  const [enviando, setEnviando] = useState(false);
+  
+  const fileInputRef = useRef(null);
 
-  const handleGerarDocumento = async (tipoApi, nomeAmigavel) => {
-    try {
-      const response = await api.get(`/documentos/gerar-pdf/${tipoApi}`, {
-        responseType: 'blob'
-      });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `${nomeAmigavel}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    } catch (error) {
-      alert("Erro ao gerar documento.");
-    }
-  };
-
-  const handleNovaSolicitacao = async (nomeSolicitacao) => {
-    if(!window.confirm(`Deseja abrir um protocolo para: ${nomeSolicitacao}?`)) return;
-    try {
-      await api.post('/requerimentos', {
-        tipo: nomeSolicitacao,
-        observacao: "Solicitado via Portal do Aluno"
-      });
-      alert("Solicitação enviada com sucesso!");
-    } catch (error) {
-      alert("Erro ao abrir solicitação.");
-    }
+  const handleNovaSolicitacao = async (e) => {
+    e.preventDefault();
+    setEnviando(true);
+    // Simulação de envio
+    setTimeout(() => {
+      setEnviando(false);
+      setAbaAtiva('acompanhar');
+      setTipoSelecionado(null);
+      setObservacao('');
+      setArquivo(null);
+    }, 1500);
   };
 
   return (
-    <div className="requerimentos-wrapper">
-      <h2 className="titulo-pagina">Requerimentos e Documentos</h2>
-      
-      <div className="secao-documentos">
-        <h4 className="subtitulo">Documentos para Download</h4>
-        <p className="descricao-secao">Gere e baixe seus documentos acadêmicos mais comuns de forma instantânea.</p>
-        
-        <div className="row g-4 mt-2">
-          <div className="col-md-5">
-            <div className="card-download">
-              <div className="icon-container blue">
-                <i className="bi bi-file-earmark-person-fill"></i>
-              </div>
-              <h5>Comprovante de Matrícula</h5>
-              <p>Gere seu comprovante oficial de matrícula para o semestre atual.</p>
-              <button className="btn-gerar" onClick={() => handleGerarDocumento('matricula', 'Matricula')}>
-                <i className="bi bi-download me-2"></i> Gerar PDF
-              </button>
+    <div className="req-container">
+      <div className="req-header mb-5">
+        <h2 className="fw-bold">Serviços Acadêmicos</h2>
+        <p className="text-muted">Gerencie seus documentos e solicitações em um só lugar.</p>
+      </div>
+
+      {/* DOCUMENTOS RÁPIDOS - CLEAN CARDS */}
+      <div className="row g-3 mb-5">
+        {['Comprovante de Matrícula', 'Histórico Escolar'].map((doc, i) => (
+          <div className="col-md-6" key={i}>
+            <div className="doc-quick-card">
+              <i className="bi bi-file-earmark-pdf text-muted fs-4"></i>
+              <span className="flex-grow-1 ms-3 fw-medium">{doc}</span>
+              <button className="btn-icon-download"><i className="bi bi-download"></i></button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* TABS NAVEGAÇÃO */}
+      <div className="req-tabs mb-4">
+        <button className={abaAtiva === 'novo' ? 'active' : ''} onClick={() => setAbaAtiva('novo')}>Novo Pedido</button>
+        <button className={abaAtiva === 'acompanhar' ? 'active' : ''} onClick={() => setAbaAtiva('acompanhar')}>Meus Requerimentos</button>
+      </div>
+
+      {abaAtiva === 'novo' ? (
+        <div className="row g-4">
+          <div className="col-lg-4">
+            <div className="type-selector-grid">
+              {TIPOS_REQUERIMENTO.map((item) => (
+                <div 
+                  key={item.id} 
+                  className={`type-card ${tipoSelecionado?.id === item.id ? 'selected' : ''}`}
+                  onClick={() => setTipoSelecionado(item)}
+                >
+                  <i className={`bi ${item.icone}`}></i>
+                  <span>{item.nome}</span>
+                </div>
+              ))}
             </div>
           </div>
 
-          <div className="col-md-5">
-            <div className="card-download">
-              <div className="icon-container green">
-                <i className="bi bi-file-earmark-bar-graph-fill"></i>
-              </div>
-              <h5>Boletim / Histórico</h5>
-              <p>Baixe seu boletim com notas e frequências ou seu histórico escolar completo.</p>
-              <button className="btn-gerar" onClick={() => handleGerarDocumento('historico', 'Historico')}>
-                <i className="bi bi-download me-2"></i> Gerar PDF
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+          <div className="col-lg-8">
+            {tipoSelecionado ? (
+              <div className="form-clean-card animate__animated animate__fadeIn">
+                <form onSubmit={handleNovaSolicitacao}>
+                  <div className="mb-4">
+                    <label className="form-label-clean">Descreva sua necessidade</label>
+                    <textarea 
+                      className="form-control-clean" 
+                      rows="4" 
+                      placeholder="Detalhes importantes para agilizar seu processo..."
+                      value={observacao}
+                      onChange={(e) => setObservacao(e.target.value)}
+                      required
+                    />
+                  </div>
 
-      <div className="secao-solicitacoes mt-5">
-        <div className="card-solicitacoes shadow-sm">
-          <h4 className="subtitulo-solicitacao">Abrir uma Solicitação</h4>
-          <p className="descricao-secao">Precisa de algo mais específico? Abra um requerimento e acompanhe o status.</p>
-          
-          <div className="list-group list-group-flush mt-3">
-            <button className="item-solicitacao" onClick={() => handleNovaSolicitacao('Trancamento de Matrícula')}>
-              Trancamento de Matrícula <i className="bi bi-chevron-right"></i>
-            </button>
-            <button className="item-solicitacao" onClick={() => handleNovaSolicitacao('Quebra de Pré-requisito')}>
-              Quebra de Pré-requisito <i className="bi bi-chevron-right"></i>
-            </button>
-            <button className="item-solicitacao" onClick={() => handleNovaSolicitacao('Aproveitamento de Estudos')}>
-              Aproveitamento de Estudos <i className="bi bi-chevron-right"></i>
-            </button>
-            <button className="item-solicitacao" onClick={() => handleNovaSolicitacao('Outras Solicitações')}>
-              Outras Solicitações <i className="bi bi-chevron-right"></i>
-            </button>
+                  {/* NOVO BOTÃO DE ANEXO CLEAN */}
+                  <div className="mb-4">
+                    <label className="form-label-clean">Anexar Comprovante (Opcional)</label>
+                    <div className={`file-drop-zone ${arquivo ? 'file-selected' : ''}`} onClick={() => fileInputRef.current.click()}>
+                      <input type="file" hidden ref={fileInputRef} onChange={(e) => setArquivo(e.target.files[0])} />
+                      <div className="d-flex align-items-center justify-content-center w-100">
+                        <i className={`bi ${arquivo ? 'bi-check2-circle' : 'bi-plus-lg'} me-2`}></i>
+                        <span className="small">{arquivo ? arquivo.name : 'Selecionar arquivo'}</span>
+                        {arquivo && <i className="bi bi-x ms-auto remove-file" onClick={(e) => { e.stopPropagation(); setArquivo(null); }}></i>}
+                      </div>
+                    </div>
+                  </div>
+
+                  <button type="submit" className="btn-submit-edu" disabled={enviando}>
+                    {enviando ? 'Enviando...' : 'Enviar Solicitação'}
+                  </button>
+                </form>
+              </div>
+            ) : (
+              <div className="empty-state-card">
+                <i className="bi bi-app-indicator"></i>
+                <p>Selecione um tipo de requerimento ao lado.</p>
+              </div>
+            )}
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="card-table-clean animate__animated animate__fadeIn">
+          <table className="table m-0">
+            <thead>
+              <tr>
+                <th>Protocolo</th>
+                <th>Requerimento</th>
+                <th>Data</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {MOCK_SOLICITACOES.map((req) => (
+                <tr key={req.id}>
+                  <td className="text-muted fw-bold">#{req.id}</td>
+                  <td className="fw-medium">{req.tipo}</td>
+                  <td className="text-muted">{req.data}</td>
+                  <td><span className={`status-dot-badge ${req.cor}`}>{req.status}</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

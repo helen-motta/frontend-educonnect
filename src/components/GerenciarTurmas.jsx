@@ -1,371 +1,237 @@
-import React, { useState, useMemo } from 'react';
-
-// --- MOCK DE DADOS (Simula o que viria do Banco de Dados) ---
-
-// 1. O Catálogo de Cursos/Disciplinas (Criado na tela anterior)
-const MOCK_CURSOS_E_DISCIPLINAS = [
-  {
-    id: 'c1',
-    nome: 'Engenharia de Software',
-    disciplinas: [
-      { id: 'es101', nome: 'Cálculo I' },
-      { id: 'es102', nome: 'Álgebra Linear' },
-      { id: 'es103', nome: 'Cálculo II' },
-      { id: 'es104', nome: 'Programação I' },
-    ]
-  },
-  {
-    id: 'c2',
-    nome: 'Design Gráfico',
-    disciplinas: [
-      { id: 'dg101', nome: 'Teoria Geral da Forma' },
-      { id: 'dg102', nome: 'História da Arte' },
-    ]
-  }
-];
-
-// 2. A Lista de Professores (Criados na tela "Gerenciar Usuários")
-const MOCK_PROFESSORES = [
-  { id: 'p1', nome: 'Prof. Silva' },
-  { id: 'p2', nome: 'Prof. Ana Faria' },
-  { id: 'p3', nome: 'Prof. Carlos Dias' },
-];
-
-// 3. Os "Slots" de Horário disponíveis
-const MOCK_HORARIOS_SLOTS = [
-  'SEG 08:00-09:50',
-  'SEG 10:00-11:50',
-  'TER 08:00-09:50',
-  'TER 10:00-11:50',
-  'QUA 08:00-09:50',
-  'QUA 10:00-11:50',
-  'QUI 08:00-09:50',
-  'QUI 10:00-11:50',
-  'SEX 08:00-09:50',
-  'SEX 10:00-11:50',
-];
-
-// 4. A Lista de Turmas já criadas (O STATE principal)
-const MOCK_TURMAS_INICIAIS = [
-  { id: 't1', disciplinaId: 'es101', nomeTurma: 'Turma A', professorId: 'p1', vagas: 50, sala: 'B-102', horarios: ['SEG 08:00-09:50', 'QUA 08:00-09:50'] },
-];
-
-// 5. Estado inicial do formulário do modal
-const VALORES_INICIAIS_FORM = {
-  disciplinaId: '',
-  nomeTurma: '',
-  professorId: '',
-  vagas: 40,
-  sala: '',
-  horarios: [] // Array de strings (dos checkboxes)
-};
-// -----------------------------------------------------------------
+import React, { useState, useEffect, useMemo } from 'react';
+import api from './../api';
 
 export default function GerenciarTurmas() {
-
-  // --- STATES DO COMPONENTE ---
-  const [turmas, setTurmas] = useState(MOCK_TURMAS_INICIAIS);
+  // --- ESTADOS ---
+  const [turmas, setTurmas] = useState([]);
+  const [cursos, setCursos] = useState([]); // Para o select do modal
+  const [disciplinas, setDisciplinas] = useState([]); // Disciplinas mapeadas do endpoint
+  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [isEditing, setIsEditing] = useState(false); // true se for editar
-  const [formData, setFormData] = useState(VALORES_INICIAIS_FORM);
+  const [isEditing, setIsEditing] = useState(false);
   
-  // States dos Filtros da Tabela
-  const [filtroCurso, setFiltroCurso] = useState('todos');
-  const [filtroProfessor, setFiltroProfessor] = useState('todos');
+  // O ID do professor logado (Vindo do seu sistema de login/JWT)
+  const professorLogadoId = 1; 
 
-  // State para o dropdown dependente
-  const [disciplinasDoCurso, setDisciplinasDoCurso] = useState([]);
+  const [formData, setFormData] = useState({
+    id: null,
+    disciplinaId: '',
+    cursoId: '',
+    nomeTurma: '',
+    professorId: professorLogadoId,
+    vagas: 40,
+    sala: '',
+    horarios: [] // IDs dos slots ou strings conforme seu back
+  });
 
+  // --- BUSCA DE DADOS (API) ---
 
-  // --- HANDLERS DO MODAL ---
-  const handleShowModal = (turmaParaEditar = null) => {
-    if (turmaParaEditar) {
-      // Modo Edição: Carrega o form com os dados da turma
-      setIsEditing(true);
+  const carregarDadosIniciais = async () => {
+    try {
+      setLoading(true);
       
-      // Encontra o curso da disciplina
-      const cursoId = MOCK_CURSOS_E_DISCIPLINAS.find(c => 
-        c.disciplinas.some(d => d.id === turmaParaEditar.disciplinaId)
-      )?.id;
+      // 1. Busca turmas filtradas pelo professor logado (Use Case do Back)
+      const resTurmas = await api.get(`$/turmas`, {
+        params: { professorId: professorLogadoId }
+      });
+
+      // 2. Busca cursos para preencher o Modal de criação
+      const resCursos = await api.get(`$/cursos`);
+
+      // 3. Busca disciplinas do professor com todos os detalhes
+      const resDisciplinas = await api.get('/turmas/professor');
+
+      setTurmas(resTurmas.data);
+      setCursos(resCursos.data);
       
-      // Carrega as disciplinas daquele curso no dropdown
-      const disciplinas = MOCK_CURSOS_E_DISCIPLINAS.find(c => c.id === cursoId)?.disciplinas || [];
-      setDisciplinasDoCurso(disciplinas);
+      // Mapeia as disciplinas do endpoint para o componente
+      const disciplinasFormatadas = resDisciplinas.data.map(turma => ({
+        id: turma.id,
+        nome: `${turma.nomeTurma} - ${turma.disciplinaNome}`,
+        disciplinaNome: turma.disciplinaNome,
+        nomeTurma: turma.nomeTurma,
+        horariosFormatados: turma.horariosFormatados || [],
+        quantidadeInscritos: turma.quantidadeInscritos,
+        vagas: turma.vagas
+      }));
       
-      // Preenche o formulário
-      setFormData({ ...turmaParaEditar, cursoId: cursoId }); // Adiciona cursoId ao form
-    } else {
-      // Modo Criação: Reseta tudo
-      setIsEditing(false);
-      setFormData(VALORES_INICIAIS_FORM);
-      setDisciplinasDoCurso([]);
+      setDisciplinas(disciplinasFormatadas);
+    } catch (error) {
+      console.error("Erro ao carregar dados:", error);
+      alert("Erro ao conectar com o servidor C#.");
+    } finally {
+      setLoading(false);
     }
-    setShowModal(true);
   };
 
-  const handleCloseModal = () => setShowModal(false);
+  useEffect(() => {
+    carregarDadosIniciais();
+  }, []);
 
-  // Handler para inputs simples
+  // --- HANDLERS ---
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
-  
-  // Handler para o DROPDOWN DEPENDENTE (Curso -> Disciplina)
-  const handleCursoChange = (e) => {
-    const cursoId = e.target.value;
-    const disciplinas = MOCK_CURSOS_E_DISCIPLINAS.find(c => c.id === cursoId)?.disciplinas || [];
-    setDisciplinasDoCurso(disciplinas);
-    
-    // Atualiza o form e reseta a disciplina selecionada
-    setFormData(prev => ({ ...prev, cursoId: cursoId, disciplinaId: '' }));
-  };
 
-  // Handler para os Checkboxes de Horário
-  const handleHorarioChange = (e) => {
-    const { value, checked } = e.target;
-    let horariosAtuais = formData.horarios;
-
-    if (checked) {
-      // Adiciona o horário ao array
-      horariosAtuais = [...horariosAtuais, value];
-    } else {
-      // Remove o horário do array
-      horariosAtuais = horariosAtuais.filter(h => h !== value);
-    }
-    setFormData(prev => ({ ...prev, horarios: horariosAtuais }));
-  };
-  
-  // Handler para Salvar (Criar ou Editar)
-  const handleSalvarTurma = (e) => {
-    e.preventDefault();
-    if (!formData.disciplinaId || !formData.professorId || !formData.nomeTurma) {
-      alert('Preencha Disciplina, Nome da Turma e Professor.');
-      return;
-    }
-    
-    if (isEditing) {
-      // Lógica de ATUALIZAR
-      setTurmas(turmas.map(t => t.id === formData.id ? { ...formData } : t));
-    } else {
-      // Lógica de CRIAR
-      const novaTurma = { ...formData, id: `t${Date.now()}` };
-      setTurmas([novaTurma, ...turmas]);
-    }
-    handleCloseModal();
-  };
-
-  const handleExcluirTurma = (id) => {
-    if (window.confirm('Tem certeza que deseja excluir esta turma?')) {
-      setTurmas(turmas.filter(t => t.id !== id));
-    }
-  };
-  
-  // --- LÓGICA DE FILTRAGEM ---
-  const turmasFiltradas = useMemo(() => {
-    return turmas
-      .filter(t => filtroProfessor === 'todos' || t.professorId === filtroProfessor)
-      .filter(t => {
-        if (filtroCurso === 'todos') return true;
-        // Verifica se a disciplina da turma (t.disciplinaId) pertence ao curso (filtroCurso)
-        const curso = MOCK_CURSOS_E_DISCIPLINAS.find(c => c.id === filtroCurso);
-        return curso.disciplinas.some(d => d.id === t.disciplinaId);
+  const handleShowModal = (turma = null) => {
+    if (turma) {
+      setIsEditing(true);
+      setFormData({
+        ...turma,
+        vagas: turma.vagasTotais // Mapeia o nome do DTO para o form
       });
-  }, [turmas, filtroCurso, filtroProfessor]);
-
-  // --- FUNÇÕES HELPER (para legibilidade da tabela) ---
-  const getDisciplinaNome = (disciplinaId) => {
-    for (const curso of MOCK_CURSOS_E_DISCIPLINAS) {
-      const disc = curso.disciplinas.find(d => d.id === disciplinaId);
-      if (disc) return disc.nome;
+    } else {
+      setIsEditing(false);
+      setFormData({
+        disciplinaId: '',
+        nomeTurma: '',
+        professorId: professorLogadoId,
+        vagas: 40,
+        sala: '',
+        horarios: []
+      });
     }
-    return 'N/A';
-  };
-  
-  const getProfessorNome = (professorId) => {
-    return MOCK_PROFESSORES.find(p => p.id === professorId)?.nome || 'N/A';
+    setShowModal(true);
   };
 
-  
-  // --- JSX (Renderização) ---
+  const handleSalvar = async (e) => {
+    e.preventDefault();
+    try {
+      if (isEditing) {
+        await api.put(`$/turmas/${formData.id}`, formData);
+      } else {
+        await api.post(`$/turmas`, formData);
+      }
+      setShowModal(false);
+      carregarDadosIniciais(); // Recarrega a lista
+    } catch (error) {
+      alert("Erro ao salvar a turma.");
+    }
+  };
+
+  const handleExcluir = async (id) => {
+    if (!window.confirm("Deseja realmente excluir esta turma?")) return;
+    try {
+      await api.delete(`$/turmas/${id}`);
+      carregarDadosIniciais();
+    } catch (error) {
+      alert("Erro ao excluir.");
+    }
+  };
+
+  // --- RENDERIZAÇÃO ---
+
   return (
-    <>
-      <h2 className="mb-4">Gerenciar Turmas do Semestre</h2>
-      
-      {/* --- 1. BARRA DE FILTROS E AÇÕES --- */}
-      <div className="card shadow-sm border-0 mb-4">
-        <div className="card-header bg-white p-3">
-          <div className="row g-3 align-items-center">
-            {/* Filtro por Curso */}
-            <div className="col-md-4">
-              <select className="form-select" value={filtroCurso} onChange={(e) => setFiltroCurso(e.target.value)}>
-                <option value="todos">Filtrar por Curso (Todos)</option>
-                {MOCK_CURSOS_E_DISCIPLINAS.map(c => (
-                  <option key={c.id} value={c.id}>{c.nome}</option>
-                ))}
-              </select>
-            </div>
-            {/* Filtro por Professor */}
-            <div className="col-md-4">
-              <select className="form-select" value={filtroProfessor} onChange={(e) => setFiltroProfessor(e.target.value)}>
-                <option value="todos">Filtrar por Professor (Todos)</option>
-                {MOCK_PROFESSORES.map(p => (
-                  <option key={p.id} value={p.id}>{p.nome}</option>
-                ))}
-              </select>
-            </div>
-            {/* Botão de Nova Turma */}
-            <div className="col-md-4 text-end">
-              <button 
-                className="btn btn-primary"
-                onClick={() => handleShowModal(null)}
-              >
-                <i className="bi bi-plus-circle-fill me-2"></i>Adicionar Turma
-              </button>
-            </div>
-          </div>
+    <div className="container-fluid p-4">
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h2 className="fw-bold mb-0" style={{ color: '#1d1c2d' }}>Gerenciar Minhas Turmas</h2>
+          <p className="text-muted">Painel exclusivo do Professor</p>
         </div>
-        
-        {/* --- 2. TABELA DE TURMAS --- */}
+        <button className="btn btn-primary px-4 py-2" onClick={() => handleShowModal()}>
+          <i className="bi bi-plus-lg me-2"></i>Criar Nova Turma
+        </button>
+      </div>
+
+      {/* TABELA */}
+      <div className="card shadow-sm border-0">
         <div className="card-body p-0">
           <div className="table-responsive">
             <table className="table table-hover align-middle mb-0">
-              <thead>
+              <thead className="bg-light">
                 <tr>
-                  <th scope="col">Turma</th>
-                  <th scope="col">Disciplina</th>
-                  <th scope="col">Professor</th>
-                  <th scope="col">Vagas</th>
-                  <th scope="col">Horários</th>
-                  <th scope="col">Ações</th>
+                  <th className="ps-4">Turma / Sala</th>
+                  <th>Disciplina</th>
+                  <th>Vagas (Ocupadas/Total)</th>
+                  <th>Horários</th>
+                  <th className="text-end pe-4">Ações</th>
                 </tr>
               </thead>
               <tbody>
-                {turmasFiltradas.length === 0 && (
-                  <tr><td colSpan="6" className="text-center p-4 text-muted">Nenhuma turma encontrada.</td></tr>
+                {loading ? (
+                  <tr><td colSpan="5" className="text-center py-5">Carregando dados do servidor...</td></tr>
+                ) : turmas.length === 0 ? (
+                  <tr><td colSpan="5" className="text-center py-5 text-muted">Nenhuma turma vinculada ao seu usuário.</td></tr>
+                ) : (
+                  turmas.map(t => (
+                    <tr key={t.id}>
+                      <td className="ps-4">
+                        <span className="fw-bold d-block">{t.nomeTurma}</span>
+                        <small className="text-muted"><i className="bi bi-geo-alt me-1"></i>{t.sala || 'Sem sala'}</small>
+                      </td>
+                      <td>{t.disciplinaNome}</td>
+                      <td>
+                        <div className="d-flex align-items-center">
+                           <span className="badge rounded-pill bg-primary-subtle text-primary me-2">
+                            {t.vagasOcupadas} / {t.vagasTotais}
+                           </span>
+                        </div>
+                      </td>
+                      <td>
+                        {t.horariosFormatados?.map((h, i) => (
+                          <span key={i} className="badge bg-secondary-subtle text-secondary-emphasis me-1" style={{fontSize: '0.7rem'}}>{h}</span>
+                        ))}
+                      </td>
+                      <td className="text-end pe-4">
+                        <button className="btn btn-sm btn-outline-secondary me-2" onClick={() => handleShowModal(t)}>
+                          <i className="bi bi-pencil"></i>
+                        </button>
+                        <button className="btn btn-sm btn-outline-danger" onClick={() => handleExcluir(t.id)}>
+                          <i className="bi bi-trash"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  ))
                 )}
-                
-                {turmasFiltradas.map(turma => (
-                  <tr key={turma.id}>
-                    <td><strong>{turma.nomeTurma}</strong><br/><small className="text-muted">Sala: {turma.sala}</small></td>
-                    <td>{getDisciplinaNome(turma.disciplinaId)}</td>
-                    <td>{getProfessorNome(turma.professorId)}</td>
-                    <td>{turma.vagas}</td>
-                    <td>
-                      {turma.horarios.map(h => (
-                        <span key={h} className="badge bg-secondary-subtle text-secondary-emphasis d-block mb-1">{h}</span>
-                      ))}
-                    </td>
-                    <td>
-                      <button 
-                        className="btn btn-sm btn-outline-secondary me-1"
-                        title="Editar"
-                        onClick={() => handleShowModal(turma)}
-                      >
-                        <i className="bi bi-pencil-fill"></i>
-                      </button>
-                      <button 
-                        className="btn btn-sm btn-outline-danger"
-                        title="Excluir Turma"
-                        onClick={() => handleExcluirTurma(turma.id)}
-                      >
-                        <i className="bi bi-trash-fill"></i>
-                      </button>
-                    </td>
-                  </tr>
-                ))}
               </tbody>
             </table>
           </div>
         </div>
       </div>
-      
-      {/* --- 3. MODAL DE ADICIONAR/EDITAR TURMA --- */}
+
+      {/* MODAL (Bootstrap Nativo via State) */}
       {showModal && (
         <>
-          <div className="modal fade show" style={{ display: 'block' }} tabIndex="-1">
-            <div className="modal-dialog modal-lg modal-dialog-centered">
-              <div className="modal-content">
-                <form onSubmit={handleSalvarTurma}>
+          <div className="modal fade show d-block" tabIndex="-1">
+            <div className="modal-dialog modal-dialog-centered">
+              <div className="modal-content border-0 shadow-lg">
+                <form onSubmit={handleSalvar}>
                   <div className="modal-header">
-                    <h5 className="modal-title">{isEditing ? 'Editar Turma' : 'Adicionar Nova Turma'}</h5>
-                    <button type="button" className="btn-close" onClick={handleCloseModal}></button>
+                    <h5 className="modal-title fw-bold">{isEditing ? 'Editar Turma' : 'Nova Turma'}</h5>
+                    <button type="button" className="btn-close" onClick={() => setShowModal(false)}></button>
                   </div>
-                  
                   <div className="modal-body">
-                    <div className="row g-3">
-                      {/* Coluna 1: Dados da Turma */}
-                      <div className="col-md-6">
-                        <div className="mb-3">
-                          <label htmlFor="cursoId" className="form-label">1. Curso</label>
-                          <select id="cursoId" name="cursoId" className="form-select" value={formData.cursoId || ''} onChange={handleCursoChange} required>
-                            <option value="" disabled>Selecione o curso...</option>
-                            {MOCK_CURSOS_E_DISCIPLINAS.map(c => (
-                              <option key={c.id} value={c.id}>{c.nome}</option>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="mb-3">
-                          <label htmlFor="disciplinaId" className="form-label">2. Disciplina</label>
-                          <select id="disciplinaId" name="disciplinaId" className="form-select" value={formData.disciplinaId} onChange={handleInputChange} required disabled={disciplinasDoCurso.length === 0}>
-                            <option value="" disabled>Selecione a disciplina...</option>
-                            {disciplinasDoCurso.map(d => (
-                              <option key={d.id} value={d.id}>{d.nome}</option>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="mb-3">
-                          <label htmlFor="professorId" className="form-label">3. Professor</label>
-                          <select id="professorId" name="professorId" className="form-select" value={formData.professorId} onChange={handleInputChange} required>
-                            <option value="" disabled>Selecione o professor...</option>
-                            {MOCK_PROFESSORES.map(p => (
-                              <option key={p.id} value={p.id}>{p.nome}</option>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="row g-2">
-                          <div className="col-md-7 mb-3">
-                            <label htmlFor="nomeTurma" className="form-label">Nome da Turma</label>
-                            <input type="text" className="form-control" id="nomeTurma" name="nomeTurma" value={formData.nomeTurma} onChange={handleInputChange} placeholder="Ex: Turma A" required />
-                          </div>
-                          <div className="col-md-5 mb-3">
-                            <label htmlFor="vagas" className="form-label">Vagas</label>
-                            <input type="number" className="form-control" id="vagas" name="vagas" value={formData.vagas} onChange={handleInputChange} required />
-                          </div>
-                        </div>
-                        <div className="mb-3">
-                            <label htmlFor="sala" className="form-label">Sala/Local</label>
-                            <input type="text" className="form-control" id="sala" name="sala" value={formData.sala} onChange={handleInputChange} placeholder="Ex: B-105" />
-                        </div>
+                    <div className="mb-3">
+                      <label className="form-label">Nome da Turma</label>
+                      <input type="text" name="nomeTurma" className="form-control" value={formData.nomeTurma} onChange={handleInputChange} required placeholder="Ex: Engenharia Noturno A" />
+                    </div>
+                    <div className="row">
+                      <div className="col-md-6 mb-3">
+                        <label className="form-label">Vagas Totais</label>
+                        <input type="number" name="vagas" className="form-control" value={formData.vagas} onChange={handleInputChange} />
                       </div>
-                      
-                      {/* Coluna 2: Horários */}
-                      <div className="col-md-6">
-                        <label className="form-label">4. Horários</label>
-                        <div className="border rounded p-3" style={{ maxHeight: '400px', overflowY: 'auto' }}>
-                          {MOCK_HORARIOS_SLOTS.map(slot => (
-                            <div className="form-check" key={slot}>
-                              <input 
-                                className="form-check-input" 
-                                type="checkbox" 
-                                value={slot} 
-                                id={slot}
-                                checked={formData.horarios.includes(slot)}
-                                onChange={handleHorarioChange}
-                              />
-                              <label className="form-check-label" htmlFor={slot}>
-                                {slot}
-                              </label>
-                            </div>
-                          ))}
-                        </div>
+                      <div className="col-md-6 mb-3">
+                        <label className="form-label">Sala</label>
+                        <input type="text" name="sala" className="form-control" value={formData.sala} onChange={handleInputChange} placeholder="Ex: Lab 04" />
                       </div>
                     </div>
+                    <div className="mb-3">
+                      <label className="form-label">Disciplina</label>
+                      <select name="disciplinaId" className="form-select" value={formData.disciplinaId} onChange={handleInputChange} required>
+                        <option value="">Selecione...</option>
+                        {disciplinas.map(disc => (
+                          <option key={disc.id} value={disc.id}>
+                            {disc.nome}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
-                  
-                  <div className="modal-footer">
-                    <button type="button" className="btn btn-secondary" onClick={handleCloseModal}>Cancelar</button>
-                    <button type="submit" className="btn btn-primary">Salvar Turma</button>
+                  <div className="modal-footer bg-light">
+                    <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancelar</button>
+                    <button type="submit" className="btn btn-primary px-4">Salvar Alterações</button>
                   </div>
                 </form>
               </div>
@@ -374,6 +240,6 @@ export default function GerenciarTurmas() {
           <div className="modal-backdrop fade show"></div>
         </>
       )}
-    </>
+    </div>
   );
 }

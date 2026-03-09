@@ -1,14 +1,11 @@
 import React, { useState } from 'react';
+import './Comunicados.css';
 
-// --- MOCK DE DADOS (Simula o que viria do Banco de Dados) ---
-
-// 1. As turmas do professor (para o <select>)
 const MOCK_TURMAS = [
   { id: 't1', nome: 'Cálculo I - Turma A' },
   { id: 't2', nome: 'Física II - Turma B' },
 ];
 
-// 2. O histórico de comunicados (para a lista)
 const MOCK_COMUNICADOS_INICIAIS = [
   {
     id: 101,
@@ -17,200 +14,146 @@ const MOCK_COMUNICADOS_INICIAIS = [
     data: '18/11/2025',
     turmas: [{ id: 't1', nome: 'Cálculo I - Turma A' }]
   },
-  {
-    id: 100,
-    assunto: 'Prazo da P1 Estendido',
-    mensagem: 'O prazo de entrega da P1 foi estendido para a próxima sexta-feira, sem falta.',
-    data: '15/11/2025',
-    turmas: [
-      { id: 't1', nome: 'Cálculo I - Turma A' },
-      { id: 't2', nome: 'Física II - Turma B' }
-    ]
-  }
 ];
-// -----------------------------------------------------------------
-
 
 export default function Comunicados() {
-
-  // State para o "banco de dados" de comunicados
   const [comunicados, setComunicados] = useState(MOCK_COMUNICADOS_INICIAIS);
-
-  // States para controlar o formulário de novo comunicado
   const [assunto, setAssunto] = useState('');
   const [mensagem, setMensagem] = useState('');
   const [turmasSelecionadas, setTurmasSelecionadas] = useState([]);
 
-  /**
-   * Handler para o <select multiple>
-   * (É um pouco diferente de um select normal)
-   */
-  const handleTurmaSelect = (e) => {
-    // Pega todos os <option> selecionados
-    const options = [...e.target.selectedOptions];
-    // Pega o 'value' (o id) de cada option
-    const values = options.map(option => option.value);
-    setTurmasSelecionadas(values);
+  // Alternar seleção de turmas de forma simples
+  const toggleTurma = (id) => {
+    setTurmasSelecionadas(prev => 
+      prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]
+    );
   };
 
-  /**
-   * Handler para ENVIAR o novo comunicado
-   */
   const handleEnviarComunicado = (e) => {
-    e.preventDefault(); // Impede o recarregamento da página
+    e.preventDefault();
+    if (!assunto || !mensagem || turmasSelecionadas.length === 0) return;
 
-    // 1. Validação (simples)
-    if (!assunto || !mensagem || turmasSelecionadas.length === 0) {
-      alert('Por favor, preencha o assunto, a mensagem e selecione ao menos uma turma.');
-      return;
-    }
-
-    // 2. "Traduzir" os IDs das turmas em nomes (para o mock)
-    const turmasInfo = turmasSelecionadas.map(id => {
-      const turma = MOCK_TURMAS.find(t => t.id === id);
-      return { id: turma.id, nome: turma.nome };
-    });
-
-    // 3. Criar o novo objeto de comunicado
     const novoComunicado = {
-      id: Date.now(), // ID único (simples)
-      assunto: assunto,
-      mensagem: mensagem,
+      id: Date.now(),
+      assunto,
+      mensagem,
       data: new Date().toLocaleDateString(),
-      turmas: turmasInfo
+      turmas: turmasSelecionadas.map(id => MOCK_TURMAS.find(t => t.id === id))
     };
 
-    // 4. Adicionar o novo comunicado ao topo da lista (nosso "BD")
     setComunicados([novoComunicado, ...comunicados]);
-
-    // 5. Limpar o formulário
-    setAssunto('');
-    setMensagem('');
-    setTurmasSelecionadas([]);
-    
-    alert('Comunicado enviado com sucesso!');
+    setAssunto(''); setMensagem(''); setTurmasSelecionadas([]);
   };
 
-  /**
-   * Handler para EXCLUIR um comunicado
-   */
-  const handleExcluirComunicado = (idParaExcluir) => {
-    if (window.confirm('Tem certeza que deseja excluir este comunicado?')) {
-      // Filtra a lista, removendo o item com o ID correspondente
-      setComunicados(comunicados.filter(c => c.id !== idParaExcluir));
+  const handleExcluir = (id) => {
+    if (window.confirm('Excluir este comunicado permanentemente?')) {
+      setComunicados(comunicados.filter(c => c.id !== id));
     }
   };
 
-
   return (
-    <>
-      <h2 className="mb-4">Gerenciar Comunicados</h2>
-
-      {/* --- 1. FORMULÁRIO DE ENVIO --- */}
-      <div className="card shadow-sm border-0 mb-4">
-        <div className="card-header bg-white py-3">
-          <h5 className="mb-0">Enviar Novo Comunicado</h5>
-        </div>
-        <div className="card-body">
-          <form onSubmit={handleEnviarComunicado}>
-            
-            {/* Seletor de Turmas (Múltiplo) */}
-            <div className="mb-3">
-              <label htmlFor="turmaSelect" className="form-label fw-bold">
-                Para quais turmas?
-              </label>
-              <select 
-                multiple // Permite selecionar mais de um
-                className="form-select" 
-                id="turmaSelect" 
-                size="4" // Mostra 4 opções de altura
-                value={turmasSelecionadas}
-                onChange={handleTurmaSelect}
-              >
-                <option value="" disabled>Segure Ctrl (ou Cmd) para selecionar várias</option>
-                {MOCK_TURMAS.map(turma => (
-                  <option key={turma.id} value={turma.id}>{turma.nome}</option>
-                ))}
-              </select>
-            </div>
-            
-            {/* Assunto */}
-            <div className="mb-3">
-              <label htmlFor="assunto" className="form-label fw-bold">Assunto</label>
-              <input 
-                type="text" 
-                className="form-control" 
-                id="assunto"
-                placeholder="Ex: Aula de Terça Cancelada"
-                value={assunto}
-                onChange={(e) => setAssunto(e.target.value)}
-              />
-            </div>
-
-            {/* Mensagem */}
-            <div className="mb-3">
-              <label htmlFor="mensagem" className="form-label fw-bold">Mensagem</label>
-              <textarea 
-                className="form-control" 
-                id="mensagem" 
-                rows="4"
-                placeholder="Escreva seu comunicado aqui..."
-                value={mensagem}
-                onChange={(e) => setMensagem(e.target.value)}
-              ></textarea>
-            </div>
-
-            <div className="text-end">
-              <button type="submit" className="btn btn-primary btn-lg">
-                <i className="bi bi-send-fill me-2"></i>Enviar Comunicado
-              </button>
-            </div>
-          </form>
+    <div className="comunicados-container animate__animated animate__fadeIn">
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h2 className="fw-bold edu-dark-text">Comunicados</h2>
+          <p className="text-muted">Informe suas turmas sobre avisos e atualizações.</p>
         </div>
       </div>
 
-      {/* --- 2. HISTÓRICO DE ENVIOS --- */}
-      <h4 className="mb-3">Histórico de Envios</h4>
-      <div className="list-group">
-        
-        {/* Caso esteja vazio */}
-        {comunicados.length === 0 && (
-          <div className="alert alert-light text-center">
-            Nenhum comunicado enviado ainda.
-          </div>
-        )}
+      <div className="row g-4">
+        {/* COLUNA: NOVO COMUNICADO */}
+        <div className="col-lg-5">
+          <div className="card border-0 shadow-sm edu-card-form">
+            <div className="card-body p-4">
+              <h5 className="fw-bold mb-4">Nova Mensagem</h5>
+              <form onSubmit={handleEnviarComunicado}>
+                
+                <div className="mb-4">
+                  <label className="edu-label">Para quais turmas?</label>
+                  <div className="d-flex flex-wrap gap-2 mt-2">
+                    {MOCK_TURMAS.map(turma => (
+                      <div 
+                        key={turma.id} 
+                        className={`edu-selectable-chip ${turmasSelecionadas.includes(turma.id) ? 'active' : ''}`}
+                        onClick={() => toggleTurma(turma.id)}
+                      >
+                        {turma.nome}
+                        {turmasSelecionadas.includes(turma.id) && <i className="bi bi-check-lg ms-2"></i>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
 
-        {/* Lista de comunicados */}
-        {comunicados.map(com => (
-          <div key={com.id} className="list-group-item list-group-item-action d-flex justify-content-between align-items-start">
-            <div className="ms-2 me-auto">
-              <div className="d-flex w-100 justify-content-between">
-                <h5 className="mb-1">{com.assunto}</h5>
-                <small className="text-muted">{com.data}</small>
-              </div>
-              <p className="mb-1">{com.mensagem}</p>
-              {/* Badges das turmas */}
-              <div className="mt-2">
-                <strong>Para:</strong>
-                {com.turmas.map(t => (
-                  <span key={t.id} className="badge bg-secondary-subtle text-secondary-emphasis ms-1">
-                    {t.nome}
-                  </span>
-                ))}
-              </div>
+                <div className="mb-3">
+                  <label className="edu-label">Assunto</label>
+                  <input 
+                    type="text" className="form-control edu-input" 
+                    placeholder="Título do aviso"
+                    value={assunto} onChange={(e) => setAssunto(e.target.value)}
+                  />
+                </div>
+
+                <div className="mb-4">
+                  <label className="edu-label">Mensagem</label>
+                  <textarea 
+                    className="form-control edu-input" rows="5"
+                    placeholder="Escreva detalhadamente..."
+                    value={mensagem} onChange={(e) => setMensagem(e.target.value)}
+                  ></textarea>
+                </div>
+
+                <button type="submit" className="btn btn-edu-primary w-100 py-3">
+                  <i className="bi bi-megaphone-fill me-2"></i> Disparar Comunicado
+                </button>
+              </form>
             </div>
-            
-            {/* Botão de Excluir */}
-            <button 
-              className="btn btn-sm btn-outline-danger border-0"
-              title="Excluir comunicado"
-              onClick={() => handleExcluirComunicado(com.id)}
-            >
-              <i className="bi bi-trash-fill fs-5"></i>
-            </button>
           </div>
-        ))}
+        </div>
+
+        {/* COLUNA: HISTÓRICO */}
+        <div className="col-lg-7">
+          <h6 className="fw-bold mb-3 text-uppercase small text-muted">Histórico de Mensagens</h6>
+          <div className="edu-feed">
+            {comunicados.length === 0 ? (
+              <div className="text-center p-5 bg-white rounded-4 shadow-sm">
+                <i className="bi bi-chat-dots fs-1 text-muted opacity-25"></i>
+                <p className="mt-3 text-muted">Nenhum comunicado enviado.</p>
+              </div>
+            ) : (
+              comunicados.map(com => (
+                <div key={com.id} className="card border-0 shadow-sm mb-3 edu-feed-item animate__animated animate__slideInUp">
+                  <div className="card-body p-4">
+                    <div className="d-flex justify-content-between align-items-start">
+                      <div className="d-flex align-items-center mb-3">
+                        <div className="edu-avatar-prof me-3">
+                          <i className="bi bi-person-workspace"></i>
+                        </div>
+                        <div>
+                          <h6 className="fw-bold m-0">{com.assunto}</h6>
+                          <small className="text-muted">{com.data}</small>
+                        </div>
+                      </div>
+                      <button className="btn btn-link text-danger p-0" onClick={() => handleExcluir(com.id)}>
+                        <i className="bi bi-trash3"></i>
+                      </button>
+                    </div>
+                    
+                    <p className="edu-msg-text text-secondary">{com.mensagem}</p>
+                    
+                    <div className="mt-3 d-flex flex-wrap gap-1">
+                      {com.turmas.map(t => (
+                        <span key={t.id} className="badge rounded-pill bg-light text-dark fw-normal border">
+                          <i className="bi bi-people me-1"></i> {t.nome}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       </div>
-    </>
+    </div>
   );
 }

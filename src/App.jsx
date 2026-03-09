@@ -20,6 +20,7 @@ import GerenciarTurmas from './components/GerenciarTurmas';
 import GerenciarRequerimentos from './components/GerenciarRequerimentos';
 import ConfiguracoesPortal from './components/ConfiguracoesPortal';
 import CalendarioProfessor from './components/CalendarioProfessor';
+import Salas from './components/Salas';
 import Perfil from './components/Perfil';
 import ConfiguracoesPerfil from './components/ConfiguracoesPerfil';
 import BoasVindas from './components/BoasVindas';
@@ -52,6 +53,7 @@ function App() {
           <Route path="carteirinha" element={<Carteirinha />} />
           <Route path="minhas-turmas" element={<MinhasTurmas />} />
           <Route path="comunicados" element={<Comunicados />} />
+          <Route path="salas" element={<Salas />} />
           <Route path="gerenciar-usuarios" element={<GerenciarUsuarios />} />
           <Route path="gerenciar-cursos" element={<GerenciarCursos />} />
           <Route path="logs" element={<LogsSistema />} />
@@ -61,7 +63,7 @@ function App() {
           <Route path="calendario-professor" element={<CalendarioProfessor />} />
         </Route>
 
-        <Route path="*" element={<Navigate to="/boas-vindas" replace />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </AuthProvider>
     </BrowserRouter>

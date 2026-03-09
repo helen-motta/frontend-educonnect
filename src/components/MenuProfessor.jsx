@@ -15,6 +15,11 @@ export default function MenuProfessor() {
         </NavLink>
       </li>
       <li className="nav-item mb-2">
+        <NavLink className="nav-link" to="/dashboard/salas">
+          <i className="bi bi-door-open-fill me-2"></i>Salas
+        </NavLink>
+      </li>
+      <li className="nav-item mb-2">
         <NavLink className="nav-link" to="/dashboard/comunicados">
           <i className="bi bi-megaphone-fill me-2"></i>Comunicados
         </NavLink>

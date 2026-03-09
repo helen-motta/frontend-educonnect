@@ -1,0 +1,11 @@
+/* --- FullCalendar Adjustments --- */
+.fc .fc-toolbar-title {
+    font-size: 1.2rem !important;
+    font-weight: bold;
+}
+
+.fc-event {
+    cursor: pointer;
+    border: none !important;
+    padding: 2px 4px;
+}

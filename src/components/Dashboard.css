@@ -88,3 +88,32 @@ a {
 .dropdown-notifications .dropdown-footer-link:hover {
   background-color: var(--bs-light);
 }
+
+.dropdown-notifications {
+    padding: 0;
+    border-radius: 8px;
+}
+
+.dropdown-scroll-area::-webkit-scrollbar {
+    width: 6px;
+}
+
+.dropdown-scroll-area::-webkit-scrollbar-thumb {
+    background-color: #dee2e6;
+    border-radius: 10px;
+}
+
+.text-muted-extra-small {
+    font-size: 0.75rem;
+    color: #adb5bd;
+}
+
+/* Efeito para item não lido */
+.bg-light-subtle {
+    background-color: rgba(13, 110, 253, 0.05) !important;
+}
+
+.dropdown-item:active {
+    background-color: #e9ecef;
+    color: inherit;
+}

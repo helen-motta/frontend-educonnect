@@ -1,299 +1,373 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
-import listPlugin from '@fullcalendar/list';
-import interactionPlugin from '@fullcalendar/interaction'; // O plugin de interação
-import { Modal, Button, Form } from 'react-bootstrap'; // Usaremos o Modal do Bootstrap
-import './CalendarioProfessor.css'; // Um CSS customizado para as cores
+import interactionPlugin from '@fullcalendar/interaction'; // Essencial para o clique em datas
+import bootstrap5Plugin from '@fullcalendar/bootstrap5';
+import ptBrLocale from '@fullcalendar/core/locales/pt-br';
+import { Modal } from 'bootstrap'; 
 
-// --- MOCK DE DADOS (Simula o que viria do Banco de Dados) ---
+import api from '../api'; 
 
-// 1. As turmas do professor (para o <select>)
-const MOCK_TURMAS_PROF = [
-  { id: 't1', nome: 'Cálculo I - Turma A' },
-  { id: 't2', nome: 'Física II - Turma B' },
-];
-
-// 2. Os tipos de evento (para o <select>)
-const EVENT_TIPOS = [
-  { id: 'prova', nome: 'Prova', cor: 'danger' },
-  { id: 'trabalho', nome: 'Trabalho / Entrega', cor: 'warning' },
-  { id: 'aula', nome: 'Aula Especial / Revisão', cor: 'info' },
-  { id: 'outro', nome: 'Outro', cor: 'secondary' },
-];
-
-// 3. Os eventos iniciais
-const MOCK_EVENTS_INICIAIS = [
-  {
-    id: '1',
-    title: 'P1 de Cálculo I',
-    start: '2025-11-20T19:00:00', // Assumindo data atual 13/11
-    end: '2025-11-20T21:00:00',
-    allDay: false,
-    extendedProps: {
-      turmaId: 't1',
-      tipo: 'prova',
-    },
-    className: 'fc-event-danger' // Cor
-  },
-  {
-    id: '2',
-    title: 'Prazo: Entrega Trabalho 1 (Física)',
-    start: '2025-11-22',
-    allDay: true,
-    extendedProps: {
-      turmaId: 't2',
-      tipo: 'trabalho',
-    },
-    className: 'fc-event-warning text-dark' // Cor
-  }
-];
-// -----------------------------------------------------------------
+import './Calendario.css';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap-icons/font/bootstrap-icons.css';
 
 export default function CalendarioProfessor() {
-
-  // State para os eventos do calendário
-  const [currentEvents, setCurrentEvents] = useState(MOCK_EVENTS_INICIAIS);
+  // --- ESTADOS DO CALENDÁRIO E EVENTOS ---
+  const [eventos, setEventos] = useState([]);
+  const [eventoSelecionado, setEventoSelecionado] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   
-  // States para controlar o Modal
-  const [showModal, setShowModal] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  
-  // State para o formulário do evento
-  const [formData, setFormData] = useState({});
+  // --- ESTADOS DO FORMULÁRIO DE CRIAÇÃO ---
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [novoEvento, setNovoEvento] = useState({
+    titulo: '',
+    dataInicio: '',
+    descricao: '',
+    tipo: 3, // Começa como 3 (Disciplina) por padrão
+    disciplinaId: ''
+  });
 
-  /**
-   * Helper para fechar o modal e resetar o formulário
-   */
-  const handleCloseModal = () => {
-    setShowModal(false);
-    setIsEditing(false);
-    setFormData({}); // Limpa o formulário
-  };
+  // Disciplinas do professor carregadas da API
+  const [disciplinasDoProfessor, setDisciplinasDoProfessor] = useState([]);
 
-  /**
-   * Ação: Clicar em uma data (ou arrastar) para CRIAR um novo evento
-   */
-  const handleDateSelect = (selectInfo) => {
-    setFormData({
-      start: selectInfo.startStr,
-      end: selectInfo.endStr,
-      allDay: selectInfo.allDay,
-    });
-    setIsEditing(false); // Estamos criando, não editando
-    setShowModal(true);
-  };
-
-  /**
-   * Ação: Clicar em um evento existente para EDITAR
-   */
-  const handleEventClick = (clickInfo) => {
-    const event = clickInfo.event;
-    setFormData({
-      id: event.id,
-      title: event.title,
-      start: event.startStr.slice(0, 16), // Formata para 'yyyy-MM-ddTHH:mm'
-      end: event.endStr.slice(0, 16),
-      allDay: event.allDay,
-      turmaId: event.extendedProps.turmaId || '',
-      tipo: event.extendedProps.tipo || 'outro',
-    });
-    setIsEditing(true); // Estamos editando
-    setShowModal(true);
-  };
-
-  /**
-   * Ação: Salvar o formulário (Criação ou Edição)
-   */
-  const handleModalSave = (e) => {
-    e.preventDefault();
-
-    const { id, title, start, end, allDay, turmaId, tipo } = formData;
-    
-    if (!title || !turmaId || !tipo) {
-      alert('Por favor, preencha o Título, Turma e Tipo.');
-      return;
+  const buscarTurmas = async () => {
+    setIsLoading(true);
+    try {
+      const response = await api.get('/turmas/professor'); 
+      console.log("Turmas do professor:", response.data);
+      
+      // Mapeia os dados da API para o formato esperado pelo componente
+      const disciplinasFormatadas = response.data.map(turma => ({
+        id: turma.id,
+        nome: `${turma.nomeTurma} - ${turma.disciplinaNome}`,
+        horariosFormatados: turma.horariosFormatados || [],
+        quantidadeInscritos: turma.quantidadeInscritos,
+        vagas: turma.vagas
+      }));
+      
+      setDisciplinasDoProfessor(disciplinasFormatadas);
+    } catch (error) {
+      console.error("Erro ao buscar turmas:", error);
+      setDisciplinasDoProfessor([]);
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    const tipoInfo = EVENT_TIPOS.find(t => t.id === tipo);
-    const eventData = {
-      id: id || `e${Date.now()}`, // Cria novo ID se não existir
-      title,
-      start,
-      end: allDay ? null : end, // Se for 'allDay', não precisa de 'end'
-      allDay,
-      extendedProps: { turmaId, tipo },
-      className: `fc-event-${tipoInfo.cor}${tipo === 'warning' ? ' text-dark' : ''}`
+  const modalViewRef = useRef(null);
+  const modalCreateRef = useRef(null);
+
+  // --- FUNÇÕES AUXILIARES (Cores e Nomes) ---
+  const definirCorDoEvento = (tipo) => {
+    switch (tipo) {
+      case 'Seminario': return '#6f42c1'; 
+      case 'Workshop': return '#198754'; 
+      case 'Disciplina': return '#0d6efd';
+      default: return '#6c757d';
+    }
+  };
+
+  const definirNomeDoTipo = (tipo) => {
+    switch (Number(tipo)) {
+      case 1: return 'Seminário';
+      case 2: return 'Workshop';
+      case 3: return 'Disciplina';
+      default: return 'Outro';
+    }
+  };
+
+  // --- BUSCAR EVENTOS ---
+  const buscarEventos = async () => {
+    setIsLoading(true);
+    try {
+      const response = await api.get('/Eventos');
+      console.log("Eventos recebidos da API:", response.data);
+      const eventosFormatados = response.data.map(ev => ({
+        id: ev.id,
+        title: ev.title,
+        start: ev.start,
+        color: definirCorDoEvento(ev.extendedProps.tipo),
+        extendedProps: ev.extendedProps
+      }));
+      setEventos(eventosFormatados);
+    } catch (error) {
+      console.error("Erro ao buscar eventos:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    buscarEventos();
+    buscarTurmas();
+  }, []);
+
+  // --- INTERAÇÕES DO USUÁRIO ---
+  
+  // 1. Professor clicou em um evento existente (Abre modal de visualização)
+  const handleEventClick = (info) => {
+    console.log("Evento clicado:", info.event);
+    setEventoSelecionado({
+      titulo: info.event.title,
+      inicio: info.event.start.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }),
+      tipoNome: info.event.extendedProps.tipo,
+      ...info.event.extendedProps
+    });
+    const modal = new Modal(modalViewRef.current);
+    modal.show();
+  };
+
+  // 2. Professor clicou em um dia vazio no calendário (Abre modal de criação)
+  const handleDateClick = (info) => {
+    // Pega a data clicada e formata para o input do tipo datetime-local (YYYY-MM-DDTHH:mm)
+    // Se clicou na visualização mensal, adiciona uma hora padrão (ex: 08:00)
+    const dataFormatada = info.dateStr.includes('T') ? info.dateStr.substring(0, 16) : `${info.dateStr}T08:00`;
+
+    
+    setNovoEvento({
+      titulo: '',
+      dataInicio: dataFormatada,
+      descricao: '',
+      tipo: 3, 
+      disciplinaId: ''
+    });
+
+    const modal = new Modal(modalCreateRef.current);
+    modal.show();
+  };
+
+  const handleCriarEvento = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    const payload = {
+      titulo: novoEvento.titulo,
+      dataInicio: novoEvento.dataInicio,
+      descricao: novoEvento.descricao,
+      tipo: Number(novoEvento.tipo),
+      disciplinaId: Number(novoEvento.tipo) === 3 ? Number(novoEvento.disciplinaId) : null
     };
 
-    if (isEditing) {
-      // Lógica de ATUALIZAR
-      setCurrentEvents(currentEvents.map(ev => ev.id === id ? eventData : ev));
-    } else {
-      // Lógica de CRIAR
-      setCurrentEvents([...currentEvents, eventData]);
-    }
-    
-    handleCloseModal();
-  };
+    console.log("Payload para criação do evento:", payload);
 
-  /**
-   * Ação: Excluir o evento (botão no modal)
-   */
-  const handleDeleteEvent = () => {
-    if (window.confirm(`Tem certeza que deseja excluir o evento: "${formData.title}"?`)) {
-      setCurrentEvents(currentEvents.filter(ev => ev.id !== formData.id));
-      handleCloseModal();
+    try {
+      await api.post('/Eventos', payload);
+      
+      const modal = Modal.getInstance(modalCreateRef.current);
+      modal.hide();
+      
+      buscarEventos();
+      
+      alert("Evento criado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao criar evento:", error);
+      alert("Erro ao criar o evento. Verifique os dados.");
+    } finally {
+      setIsSubmitting(false);
     }
-  };
-
-  /**
-   * Ação: Arrastar e soltar um evento
-   */
-  const handleEventDrop = (info) => {
-    if (!window.confirm("Tem certeza que deseja mover este evento?")) {
-      info.revert(); // Desfaz a mudança
-      return;
-    }
-    
-    // Atualiza o state (simulação)
-    setCurrentEvents(currentEvents.map(ev => 
-      ev.id === info.event.id ? { ...ev, start: info.event.startStr, end: info.event.endStr } : ev
-    ));
-    alert('Evento movido!');
-  };
-  
-  // Handler genérico para o formulário
-  const handleFormChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-  };
-
-  // Renderiza ícones nos eventos
-  const renderEventContent = (eventInfo) => {
-    const tipo = eventInfo.event.extendedProps.tipo;
-    let icon = 'bi-calendar-event';
-    if (tipo === 'prova') icon = 'bi-pencil-square';
-    if (tipo === 'trabalho') icon = 'bi-file-earmark-text';
-    if (tipo === 'aula') icon = 'bi-book';
-    
-    return (
-      <>
-        <i className={`bi ${icon} me-2`}></i>
-        <b>{eventInfo.timeText}</b>
-        <span className="ms-2">{eventInfo.event.title}</span>
-      </>
-    );
   };
 
   return (
     <>
-      <h2 className="mb-4">Calendário Acadêmico (Professor)</h2>
-      <div className="alert alert-light">
-        <i className="bi bi-info-circle-fill me-2"></i>
-        Clique em uma data para adicionar um evento, ou clique em um evento para editá-lo.
-      </div>
-      
-      <div className="card shadow-sm border-0">
-        <div className="card-body">
-          <FullCalendar
-            plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
-            headerToolbar={{
-              left: 'prev,next today',
-              center: 'title',
-              right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
-            }}
-            initialView='dayGridMonth'
-            locale='pt-br' // Para traduzir
-            buttonText={{
-              today: 'Hoje',
-              month: 'Mês',
-              week: 'Semana',
-              day: 'Dia',
-              list: 'Lista'
-            }}
-            events={currentEvents}
-            selectable={true}        // Permite clicar em datas vazias
-            editable={true}          // Permite arrastar eventos
-            select={handleDateSelect}     // Handler para criar
-            eventClick={handleEventClick}  // Handler para editar/ver
-            eventDrop={handleEventDrop}    // Handler para arrastar
-            eventContent={renderEventContent} // Customiza a aparência do evento
-          />
+      <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <h2>Gestão do Calendário</h2>
+        
+        <div className="d-flex gap-3 small fw-semibold">
+          <span className="d-flex align-items-center gap-1">
+            <span style={{width: '12px', height: '12px', backgroundColor: '#0d6efd', borderRadius: '50%'}}></span> Disciplina
+          </span>
+          <span className="d-flex align-items-center gap-1">
+            <span style={{width: '12px', height: '12px', backgroundColor: '#6f42c1', borderRadius: '50%'}}></span> Seminário
+          </span>
+          <span className="d-flex align-items-center gap-1">
+            <span style={{width: '12px', height: '12px', backgroundColor: '#198754', borderRadius: '50%'}}></span> Workshop
+          </span>
         </div>
       </div>
 
-      {/* --- MODAL DE CRIAÇÃO/EDIÇÃO --- */}
-      <Modal show={showModal} onHide={handleCloseModal} centered>
-        <Form onSubmit={handleModalSave}>
-          <Modal.Header closeButton>
-            <Modal.Title>
-              {isEditing ? 'Editar Evento' : 'Adicionar Novo Evento'}
-            </Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <Form.Group className="mb-3">
-              <Form.Label>Título do Evento</Form.Label>
-              <Form.Control type="text" name="title" value={formData.title || ''} onChange={handleFormChange} required />
-            </Form.Group>
-            
-            <Form.Group className="mb-3">
-              <Form.Label>Tipo de Evento</Form.Label>
-              <Form.Select name="tipo" value={formData.tipo || ''} onChange={handleFormChange} required>
-                <option value="" disabled>Selecione o tipo...</option>
-                {EVENT_TIPOS.map(tipo => (
-                  <option key={tipo.id} value={tipo.id}>{tipo.nome}</option>
-                ))}
-              </Form.Select>
-            </Form.Group>
+      <div className="card shadow-sm border-0 mb-4">
+        <div className="card-body bg-light text-muted small rounded">
+          <i className="bi bi-info-circle-fill me-2 text-primary"></i>
+          Dica: Clique em qualquer dia ou horário livre no calendário abaixo para agendar um novo evento.
+        </div>
+      </div>
 
-            <Form.Group className="mb-3">
-              <Form.Label>Para qual turma?</Form.Label>
-              <Form.Select name="turmaId" value={formData.turmaId || ''} onChange={handleFormChange} required>
-                <option value="" disabled>Selecione a turma...</option>
-                {MOCK_TURMAS_PROF.map(turma => (
-                  <option key={turma.id} value={turma.id}>{turma.nome}</option>
-                ))}
-              </Form.Select>
-            </Form.Group>
-            
-            <Form.Group className="mb-3">
-              <Form.Label>Início</Form.Label>
-              <Form.Control type={formData.allDay ? 'date' : 'datetime-local'} name="start" value={formData.start || ''} onChange={handleFormChange} required />
-            </Form.Group>
-            
-            {!formData.allDay && (
-              <Form.Group className="mb-3">
-                <Form.Label>Fim</Form.Label>
-                <Form.Control type="datetime-local" name="end" value={formData.end || ''} onChange={handleFormChange} />
-              </Form.Group>
-            )}
-
-            <Form.Check type="switch" label="Dia inteiro?" name="allDay" checked={formData.allDay || false} onChange={handleFormChange} />
-          </Modal.Body>
-          <Modal.Footer className="justify-content-between">
-            <div>
-              {isEditing && (
-                <Button variant="danger" type="button" onClick={handleDeleteEvent}>
-                  <i className="bi bi-trash-fill me-2"></i>Excluir
-                </Button>
+      <div className="row">
+        <div className="col-12">
+          <div className="card shadow-sm border-0">
+            <div className="card-body p-4 position-relative">
+              {isLoading && (
+                <div className="position-absolute top-50 start-50 translate-middle z-3">
+                  <div className="spinner-border text-primary" role="status"><span className="visually-hidden">Carregando...</span></div>
+                </div>
               )}
+
+              <div style={{ opacity: isLoading ? 0.3 : 1, transition: 'opacity 0.3s' }}>
+                <FullCalendar
+                  plugins={[dayGridPlugin, timeGridPlugin, bootstrap5Plugin, interactionPlugin]}
+                  themeSystem="bootstrap5"
+                  locales={[ptBrLocale]}
+                  locale="pt-br"
+                  initialView="dayGridMonth"
+                  headerToolbar={{
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek'
+                  }}
+                  events={eventos}
+                  eventClick={handleEventClick}
+                  dateClick={handleDateClick} // <-- Habilita o clique em datas vazias
+                  selectable={true}
+                  dayMaxEvents={true}
+                  height="auto"
+                />
+              </div>
             </div>
-            <div>
-              <Button variant="secondary" type="button" onClick={handleCloseModal} className="me-2">
-                Cancelar
-              </Button>
-              <Button variant="primary" type="submit">
-                Salvar Evento
-              </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* MODAL 1: VISUALIZAR EVENTO EXISTENTE (Igual ao do aluno) */}
+      <div className="modal fade" id="modalViewEvento" tabIndex="-1" ref={modalViewRef}>
+         {/* ... (Mesmo código do modal de visualização do aluno) ... */}
+         <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-content border-0 shadow">
+            <div className="modal-header bg-light border-bottom-0">
+              <h5 className="modal-title fw-bold">
+                <span className="badge bg-secondary me-2">{eventoSelecionado?.tipoNome}</span>
+                <div className="light-grey">{eventoSelecionado?.titulo}</div>
+              </h5>
+              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-          </Modal.Footer>
-        </Form>
-      </Modal>
+            <div className="modal-body">
+              <div className="row g-3">
+                <div className="col-12">
+                  <label className="text-muted small d-block">Data e Hora</label>
+                  <span className="fw-semibold">📅 {eventoSelecionado?.inicio}</span>
+                </div>
+                {eventoSelecionado?.descricao && (
+                  <div className="col-12 border-top pt-2">
+                    <div className="p-3 bg-light rounded border-start border-primary border-4">
+                      <label className="text-muted small d-block mb-1">Descrição</label>
+                      <p className="mb-0 small">{eventoSelecionado.descricao}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="modal-footer border-0">
+              <button type="button" className="btn btn-secondary btn-sm px-4" data-bs-dismiss="modal">Fechar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* MODAL 2: CRIAR NOVO EVENTO (Específico do Professor) */}
+      <div className="modal fade" id="modalCriarEvento" tabIndex="-1" ref={modalCreateRef}>
+        <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-content border-0 shadow">
+            
+            <form onSubmit={handleCriarEvento}>
+              <div className="modal-header border-bottom-0">
+                <h5 className="modal-title fw-bold">Agendar Novo Evento</h5>
+                <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              
+              <div className="modal-body py-0">
+                <div className="row g-3">
+                  
+                  {/* Título */}
+                  <div className="col-12">
+                    <label className="form-label fw-semibold small">Título do Evento *</label>
+                    <input 
+                      type="text" 
+                      className="form-control" 
+                      required 
+                      maxLength="100"
+                      placeholder="Ex: Prova P1, Seminário de IA..."
+                      value={novoEvento.titulo}
+                      onChange={e => setNovoEvento({...novoEvento, titulo: e.target.value})}
+                    />
+                  </div>
+
+                  {/* Data e Hora */}
+                  <div className="col-12">
+                    <label className="form-label fw-semibold small">Data e Hora *</label>
+                    <input 
+                      type="datetime-local" 
+                      className="form-control" 
+                      required 
+                      value={novoEvento.dataInicio}
+                      onChange={e => setNovoEvento({...novoEvento, dataInicio: e.target.value})}
+                    />
+                  </div>
+
+                  {/* Tipo de Evento */}
+                  <div className="col-12">
+                    <label className="form-label fw-semibold small">Tipo de Evento *</label>
+                    <select 
+                      className="form-select" 
+                      value={novoEvento.tipo}
+                      onChange={e => setNovoEvento({...novoEvento, tipo: Number(e.target.value)})}
+                    >
+                      <option value={3}>Evento de Disciplina (Provas, Entregas)</option>
+                      <option value={1}>Seminário Aberto</option>
+                      <option value={2}>Workshop Institucional</option>
+                    </select>
+                  </div>
+
+                  {/* Disciplina (Aparece SÓ SE o tipo for 3) */}
+                  {novoEvento.tipo === 3 && (
+                    <div className="col-12 border-start border-primary border-3 ms-2 ps-3 py-2 bg-light rounded">
+                      <label className="form-label fw-semibold small text-primary">Vincular a qual disciplina? *</label>
+                      <select 
+                        className="form-select" 
+                        required 
+                        value={novoEvento.disciplinaId}
+                        onChange={e => setNovoEvento({...novoEvento, disciplinaId: e.target.value})}
+                      >
+                        <option value="">Selecione uma disciplina...</option>
+                        {disciplinasDoProfessor.map(disc => (
+                          <option key={disc.id} value={disc.id}>{disc.nome}</option>
+                        ))}
+                      </select>
+                      <div className="form-text small">Apenas alunos matriculados nesta disciplina verão este evento.</div>
+                    </div>
+                  )}
+
+                  {/* Descrição */}
+                  <div className="col-12">
+                    <label className="form-label fw-semibold small">Instruções / Descrição</label>
+                    <textarea 
+                      className="form-control" 
+                      rows="3" 
+                      maxLength="500"
+                      placeholder="Orientações adicionais para os alunos..."
+                      value={novoEvento.descricao}
+                      onChange={e => setNovoEvento({...novoEvento, descricao: e.target.value})}
+                    ></textarea>
+                  </div>
+
+                </div>
+              </div>
+              
+              <div className="modal-footer border-0 mt-3">
+                <button type="button" className="btn btn-light" data-bs-dismiss="modal" disabled={isSubmitting}>Cancelar</button>
+                <button type="submit" className="btn btn-primary px-4" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <><span className="spinner-border spinner-border-sm me-2"></span> Salvando...</>
+                  ) : (
+                    'Confirmar Agendamento'
+                  )}
+                </button>
+              </div>
+            </form>
+
+          </div>
+        </div>
+      </div>
     </>
   );
 }

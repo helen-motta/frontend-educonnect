@@ -1,217 +1,181 @@
-import React from 'react';
-
-// (Não precisa de CSS novo, as classes do Bootstrap e do Dashboard.css dão conta)
+import React, { useState, useEffect } from 'react';
+import api from './../api'; // Importe sua configuração do axios
 
 export default function NotasFrequencia() {
+  const [disciplinas, setDisciplinas] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [semestre, setSemestre] = useState('2024.1'); // mockado por enquanto
+
+  const buscarBoletimAluno = async () => {
+    try {
+      setLoading(true);
+      const alunoId = 2; // Substituir pelo ID dinâmico do usuário logado
+      const response = await api.get(`/Boletim/aluno/${alunoId}`);
+      setDisciplinas(response.data || []);
+    } catch (error) {
+      console.error("Erro ao carregar boletim:", error);
+      setDisciplinas([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // Por enquanto o semestre é apenas visual; a API ainda não filtra por período
+    buscarBoletimAluno();
+  }, [semestre]);
+
+  const calcularMedia = (disc) => {
+    if (disc.notaFinal !== null && disc.notaFinal !== undefined) {
+      return disc.notaFinal;
+    }
+
+    const notas = [disc.p1, disc.p2, disc.trabalho].filter(
+      (n) => typeof n === 'number'
+    );
+
+    if (notas.length === 0) return '-';
+
+    const media = notas.reduce((acc, n) => acc + n, 0) / notas.length;
+    return media.toFixed(1);
+  };
+
+  const getBadgeClass = (nota) => {
+    if (nota === '-' || nota === null || nota === undefined) return 'bg-secondary';
+    return nota >= 6 ? 'bg-success' : 'bg-danger';
+  };
+
   return (
     <>
-      <h2 className="mb-4">Notas e Frequência</h2>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h2 className="mb-0">Notas e Frequência</h2>
 
-      {/* O container principal do Acordeão. 
-          O 'id' é importante para que só um item abra de cada vez.
-      */}
-      <div className="accordion" id="accordionNotasFrequencia">
-
-        {/* --- ITEM 1: ENGENHARIA DE SOFTWARE (Inicia Aberto) --- */}
-        <div className="accordion-item shadow-sm border-0 mb-3">
-          <h2 className="accordion-header" id="headingOne">
-            <button className="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-              <div className="d-flex justify-content-between w-100 pe-3">
-                <strong className="fs-5">Engenharia de Software - Prof. Carlos</strong>
-                <span className="fs-5">
-                  Média: <span className="badge bg-success">8.5</span>
-                </span>
-                <span className="fs-5">
-                  Frequência: <span className="badge bg-success">95%</span>
-                </span>
-              </div>
-            </button>
-          </h2>
-          <div id="collapseOne" className="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionNotasFrequencia">
-            <div className="accordion-body">
-              <div className="row">
-                <div className="col-md-6">
-                  <h5>Detalhamento das Notas</h5>
-                  <ul className="list-group list-group-flush">
-                    <li className="list-group-item d-flex justify-content-between align-items-center">
-                      Prova 1 (P1)
-                      <span className="badge bg-primary rounded-pill fs-6">8.0</span>
-                    </li>
-                    <li className="list-group-item d-flex justify-content-between align-items-center">
-                      Projeto ES
-                      <span className="badge bg-primary rounded-pill fs-6">9.5</span>
-                    </li>
-                    <li className="list-group-item d-flex justify-content-between align-items-center">
-                      Participação
-                      <span className="badge bg-primary rounded-pill fs-6">8.0</span>
-                    </li>
-                  </ul>
-                </div>
-                <div className="col-md-6">
-                  <h5>Frequência</h5>
-                  <p className="mb-1">Total de Faltas: <strong>2</strong></p>
-                  <p className="text-muted small">Limite de faltas permitido: 20 (25%)</p>
-                  <div className="progress" style={{height: "25px"}} role="progressbar" aria-label="Frequência" aria-valuenow="95" aria-valuemin="0" aria-valuemax="100">
-                    <div className="progress-bar bg-success" style={{width: "95%"}}>
-                      95% Presente
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* --- ITEM 2: ARQUITETURA DE SOFTWARE --- */}
-        <div className="accordion-item shadow-sm border-0 mb-3">
-          <h2 className="accordion-header" id="headingTwo">
-            <button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-              <div className="d-flex justify-content-between w-100 pe-3">
-                <strong className="fs-5">Arquitetura de Software - Prof. Roberto</strong>
-                <span className="fs-5">
-                  Média: <span className="badge bg-success">9.0</span>
-                </span>
-                <span className="fs-5">
-                  Frequência: <span className="badge bg-success">100%</span>
-                </span>
-              </div>
-            </button>
-          </h2>
-          <div id="collapseTwo" className="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionNotasFrequencia">
-            <div className="accordion-body">
-              <div className="row">
-                <div className="col-md-6">
-                  <h5>Detalhamento das Notas</h5>
-                  <ul className="list-group list-group-flush">
-                    <li className="list-group-item d-flex justify-content-between align-items-center">
-                      Prova 1 (P1)
-                      <span className="badge bg-primary rounded-pill fs-6">9.0</span>
-                    </li>
-                    <li className="list-group-item d-flex justify-content-between align-items-center">
-                      Arquitetura v1
-                      <span className="badge bg-primary rounded-pill fs-6">9.5</span>
-                    </li>
-                    <li className="list-group-item d-flex justify-content-between align-items-center">
-                      Seminário
-                      <span className="badge bg-primary rounded-pill fs-6">8.0</span>
-                    </li>
-                  </ul>
-                </div>
-                <div className="col-md-6">
-                  <h5>Frequência</h5>
-                  <p className="mb-1">Total de Faltas: <strong>0</strong></p>
-                  <p className="text-muted small">Limite de faltas permitido: 20 (25%)</p>
-                  <div className="progress" style={{height: "25px"}} role="progressbar" aria-label="Frequência" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
-                    <div className="progress-bar bg-success" style={{width: "100%"}}>
-                      100% Presente
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* --- ITEM 3: PADRÕES DE PROJETO --- */}
-        <div className="accordion-item shadow-sm border-0 mb-3">
-          <h2 className="accordion-header" id="headingThree">
-            <button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
-              <div className="d-flex justify-content-between w-100 pe-3">
-                <strong className="fs-5">Padrões de Projeto - Prof. Julia</strong>
-                <span className="fs-5">
-                  Média: <span className="badge bg-success">8.0</span>
-                </span>
-                <span className="fs-5">
-                  Frequência: <span className="badge bg-success">92%</span>
-                </span>
-              </div>
-            </button>
-          </h2>
-          <div id="collapseThree" className="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#accordionNotasFrequencia">
-            <div className="accordion-body">
-              <div className="row">
-                <div className="col-md-6">
-                  <h5>Detalhamento das Notas</h5>
-                  <ul className="list-group list-group-flush">
-                    <li className="list-group-item d-flex justify-content-between align-items-center">
-                      Prova 1 (P1)
-                      <span className="badge bg-primary rounded-pill fs-6">7.5</span>
-                    </li>
-                    <li className="list-group-item d-flex justify-content-between align-items-center">
-                      Projeto Padrões
-                      <span className="badge bg-primary rounded-pill fs-6">8.5</span>
-                    </li>
-                    <li className="list-group-item d-flex justify-content-between align-items-center">
-                      Atividades Práticas
-                      <span className="badge bg-primary rounded-pill fs-6">8.0</span>
-                    </li>
-                  </ul>
-                </div>
-                <div className="col-md-6">
-                  <h5>Frequência</h5>
-                  <p className="mb-1">Total de Faltas: <strong>3</strong></p>
-                  <p className="text-muted small">Limite de faltas permitido: 20 (25%)</p>
-                  <div className="progress" style={{height: "25px"}} role="progressbar" aria-label="Frequência" aria-valuenow="92" aria-valuemin="0" aria-valuemax="100">
-                    <div className="progress-bar bg-success" style={{width: "92%"}}>
-                      92% Presente
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* --- ITEM 4: QUALIDADE DE SOFTWARE --- */}
-        <div className="accordion-item shadow-sm border-0 mb-3">
-          <h2 className="accordion-header" id="headingFour">
-            <button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
-              <div className="d-flex justify-content-between w-100 pe-3">
-                <strong className="fs-5">Qualidade de Software - Prof. Fernanda</strong>
-                <span className="fs-5">
-                  Média: <span className="badge bg-success">7.5</span>
-                </span>
-                <span className="fs-5">
-                  Frequência: <span className="badge bg-warning text-dark">88%</span>
-                </span>
-              </div>
-            </button>
-          </h2>
-          <div id="collapseFour" className="accordion-collapse collapse" aria-labelledby="headingFour" data-bs-parent="#accordionNotasFrequencia">
-            <div className="accordion-body">
-              <div className="row">
-                <div className="col-md-6">
-                  <h5>Detalhamento das Notas</h5>
-                  <ul className="list-group list-group-flush">
-                    <li className="list-group-item d-flex justify-content-between align-items-center">
-                      Prova 1 (P1)
-                      <span className="badge bg-primary rounded-pill fs-6">7.0</span>
-                    </li>
-                    <li className="list-group-item d-flex justify-content-between align-items-center">
-                      Testes Automatizados
-                      <span className="badge bg-primary rounded-pill fs-6">8.0</span>
-                    </li>
-                    <li className="list-group-item d-flex justify-content-between align-items-center">
-                      Trabalho Prático
-                      <span className="badge bg-primary rounded-pill fs-6">7.5</span>
-                    </li>
-                  </ul>
-                </div>
-                <div className="col-md-6">
-                  <h5>Frequência</h5>
-                  <p className="mb-1">Total de Faltas: <strong>5</strong></p>
-                  <p className="text-muted small">Limite de faltas permitido: 20 (25%)</p>
-                  <div className="progress" style={{height: "25px"}} role="progressbar" aria-label="Frequência" aria-valuenow="88" aria-valuemin="0" aria-valuemax="100">
-                    <div className="progress-bar bg-warning" style={{width: "88%"}}>
-                      88% Presente
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+        <div className="d-flex align-items-center">
+          <label htmlFor="selectSemestre" className="me-2 text-muted fw-bold">
+            Semestre:
+          </label>
+          <select
+            id="selectSemestre"
+            className="form-select shadow-sm"
+            style={{ width: 'auto' }}
+            value={semestre}
+            onChange={(e) => setSemestre(e.target.value)}
+          >
+            <option value="2024.1">2024 - 1º Semestre</option>
+            <option value="2023.2">2023 - 2º Semestre</option>
+            <option value="2023.1">2023 - 1º Semestre</option>
+          </select>
         </div>
       </div>
+      {loading ? (
+        <div className="text-center p-5">Carregando informações...</div>
+      ) : (
+        <div className="accordion" id="accordionNotasFrequencia">
+          {disciplinas.length === 0 && (
+            <p className="text-center text-muted">
+              Nenhum dado de boletim encontrado.
+            </p>
+          )}
+
+          {disciplinas.map((disc, index) => {
+            const media = calcularMedia(disc);
+            const frequencia = disc.frequenciaPercentual ?? 0;
+
+            return (
+              <div
+                className="accordion-item shadow-sm border-0 mb-3"
+                key={disc.turmaId || index}
+              >
+                <h2 className="accordion-header">
+                  <button
+                    className="accordion-button collapsed"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target={`#collapse${index}`}
+                  >
+                    <div className="d-flex justify-content-between w-100 pe-3 flex-wrap align-items-center">
+                      <div>
+                        <strong className="fs-5">{disc.disciplina}</strong>
+                        <div className="text-muted small">Prof. {disc.professor}</div>
+                      </div>
+                      <div className="d-flex gap-3 mt-2 mt-md-0">
+                        <span className="fs-6">
+                          Média:{' '}
+                          <span className={`badge ${getBadgeClass(media)}`}>
+                            {media}
+                          </span>
+                        </span>
+                        <span className="fs-6">
+                          Frequência:{' '}
+                          <span className="badge bg-success">
+                            {frequencia}%
+                          </span>
+                        </span>
+                      </div>
+                    </div>
+                  </button>
+                </h2>
+                <div
+                  id={`collapse${index}`}
+                  className="accordion-collapse collapse"
+                  data-bs-parent="#accordionNotasFrequencia"
+                >
+                  <div className="accordion-body">
+                    <div className="row">
+                      <div className="col-md-6 border-end">
+                        <h5>Detalhamento das Notas</h5>
+                        <ul className="list-group list-group-flush">
+                          <li className="list-group-item d-flex justify-content-between align-items-center bg-transparent">
+                            Prova 1 (P1)
+                            <span className="badge bg-primary rounded-pill fs-6">
+                              {disc.p1 ?? '-'}
+                            </span>
+                          </li>
+                          <li className="list-group-item d-flex justify-content-between align-items-center bg-transparent">
+                            Prova 2 (P2)
+                            <span className="badge bg-primary rounded-pill fs-6">
+                              {disc.p2 ?? '-'}
+                            </span>
+                          </li>
+                          <li className="list-group-item d-flex justify-content-between align-items-center bg-transparent">
+                            Trabalho
+                            <span className="badge bg-primary rounded-pill fs-6">
+                              {disc.trabalho ?? '-'}
+                            </span>
+                          </li>
+                          <li className="list-group-item d-flex justify-content-between align-items-center bg-transparent">
+                            Nota Final
+                            <span className="badge bg-secondary rounded-pill fs-6">
+                              {disc.notaFinal ?? '-'}
+                            </span>
+                          </li>
+                        </ul>
+                      </div>
+                      <div className="col-md-6 ps-md-4">
+                        <h5>Frequência</h5>
+                        <div
+                          className="progress"
+                          style={{ height: '25px' }}
+                          role="progressbar"
+                        >
+                          <div
+                            className={`progress-bar ${
+                              frequencia < 75 ? 'bg-danger' : 'bg-success'
+                            }`}
+                            style={{ width: `${frequencia}%` }}
+                          >
+                            {frequencia}% Presente
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </>
   );
 }

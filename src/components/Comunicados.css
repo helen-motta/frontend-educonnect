@@ -1,0 +1,101 @@
+/* Paleta: #d8f17b (Verde) e #1f1e30 (Dark) */
+
+.edu-dark-text { color: #1f1e30; }
+
+/* Chips de Seleção (Substituindo o Select Multiple) */
+.edu-selectable-chip {
+    padding: 8px 16px;
+    border-radius: 50px;
+    background: #f1f3f5;
+    color: #495057;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.edu-selectable-chip:hover {
+    background: #e9ecef;
+}
+
+.edu-selectable-chip.active {
+    background: #1f1e30;
+    color: #d8f17b;
+    font-weight: bold;
+}
+
+/* Inputs e Cards */
+.edu-card-form {
+    border-radius: 20px;
+    border-top: 5px solid #d8f17b !important;
+}
+
+.edu-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.edu-input {
+    border: 2px solid #f1f3f5;
+    border-radius: 12px;
+    padding: 12px;
+    transition: all 0.2s;
+}
+
+.edu-input:focus {
+    border-color: #d8f17b;
+    box-shadow: none;
+}
+
+.btn-edu-primary {
+    background: #1f1e30;
+    color: #d8f17b;
+    border: none;
+    border-radius: 12px;
+    font-weight: bold;
+    transition: transform 0.2s;
+}
+
+.btn-edu-primary:hover {
+    background: #2a2942;
+    color: #d8f17b;
+    transform: translateY(-2px);
+}
+
+/* Feed de Comunicados */
+.edu-feed-item {
+    border-radius: 16px;
+    transition: transform 0.2s;
+}
+
+.edu-avatar-prof {
+    width: 40px;
+    height: 40px;
+    background: #d8f17b;
+    color: #1f1e30;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+.edu-msg-text {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
+/* Scroll suave para o feed */
+.edu-feed {
+    max-height: 80vh;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.edu-feed::-webkit-scrollbar { width: 5px; }
+.edu-feed::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 10px; }

@@ -3,7 +3,7 @@ import React from 'react';
 export default function Inicio() {
   return (
     <>
-      <h2 className="mb-4">Olá, Nome! 👋</h2>
+      <h2 className="mb-4">Olá, Helena! 👋</h2>
 
       <div className="row g-4 mb-4">
         <div className="col-md-8">

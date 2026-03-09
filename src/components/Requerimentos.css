@@ -1,112 +1,164 @@
-.requerimentos-wrapper {
-  padding: 2rem;
-  background-color: #ffffff;
+/* Cores Base: #d8f17b (Neon) e #1f1e30 (Dark) */
+
+.req-container {
+  max-width: 1100px;
+  margin: 0 auto;
 }
 
-.titulo-pagina {
-  font-size: 1.8rem;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 2rem;
+/* Downloads Rápidos Simplificados */
+.doc-quick-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 15px 20px;
+  display: flex;
+  align-items: center;
+  border: 1px solid #edf0f2;
 }
 
-.subtitulo {
-  font-weight: 700;
-  color: #444;
-  margin-bottom: 0.5rem;
+.btn-icon-download {
+  border: none;
+  background: #f8f9fa;
+  color: #1f1e30;
+  width: 35px;
+  height: 35px;
+  border-radius: 8px;
+  transition: 0.2s;
 }
 
-.descricao-secao {
-  color: #777;
+.btn-icon-download:hover {
+  background: #d8f17b;
+}
+
+/* Tabs Estilo Minimalista */
+.req-tabs {
+  display: flex;
+  gap: 10px;
+  border-bottom: 1px solid #edf0f2;
+}
+
+.req-tabs button {
+  background: none;
+  border: none;
+  padding: 10px 20px;
+  color: #6c757d;
+  font-weight: 500;
+  position: relative;
+  transition: 0.3s;
+}
+
+.req-tabs button.active {
+  color: #1f1e30;
+}
+
+.req-tabs button.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: #d8f17b;
+}
+
+/* Seletor de Tipos em Cards */
+.type-selector-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.type-card {
+  background: #fff;
+  padding: 15px;
+  border-radius: 10px;
+  cursor: pointer;
+  border: 1px solid #edf0f2;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: 0.2s;
   font-size: 0.95rem;
 }
 
-/* Cards de Download (Estilo image_fbc77e) */
-.card-download {
+.type-card i { font-size: 1.2rem; color: #1f1e30; }
+
+.type-card:hover { border-color: #d8f17b; }
+
+.type-card.selected {
+  background: #1f1e30;
+  color: #d8f17b;
+  border-color: #1f1e30;
+}
+
+.type-card.selected i { color: #d8f17b; }
+
+/* Botão de Anexo Clean */
+.file-drop-zone {
+  border: 2px dashed #e2e8f0;
+  border-radius: 10px;
+  padding: 12px 20px;
+  cursor: pointer;
+  background: #f8fafc;
+  transition: all 0.2s;
+}
+
+.file-drop-zone:hover {
+  border-color: #d8f17b;
   background: #fff;
-  border: 1px solid #eee;
-  border-radius: 12px;
-  padding: 2.5rem 1.5rem;
-  text-align: center;
-  height: 100%;
-  transition: transform 0.2s;
 }
 
-.card-download:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+.file-selected {
+  border: 1px solid #d8f17b;
+  background: #fafdf0;
 }
 
-.icon-container {
-  font-size: 2.5rem;
-  margin-bottom: 1.5rem;
+.remove-file {
+  font-size: 1.2rem;
+  color: #dc3545;
+  cursor: pointer;
 }
 
-.icon-container.blue { color: #3b82f6; }
-.icon-container.green { color: #10b981; }
-
-.card-download h5 {
-  font-weight: 700;
-  color: #333;
-}
-
-.card-download p {
-  font-size: 0.85rem;
-  color: #666;
-  min-height: 40px;
-}
-
-.btn-gerar {
-  background-color: #d9f99d; /* Verde limão da paleta EduConnect */
-  border: none;
-  color: #3f6212;
-  font-weight: 700;
-  padding: 0.6rem 2rem;
+/* Formulário e Tabela Clean */
+.form-control-clean {
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
-  margin-top: 1rem;
-  transition: all 0.3s ease;
+  padding: 12px;
+  width: 100%;
 }
 
-.btn-gerar:hover {
-  background-color: #bef264;
-  transform: scale(1.05);
-}
-
-/* Seção de Solicitações (Lista aumentada) */
-.card-solicitacoes {
-  background: #fff;
-  border: 1px solid #eee;
-  border-radius: 12px;
-  padding: 2rem;
-  max-width: 600px;
-}
-
-.subtitulo-solicitacao {
+.form-label-clean {
+  font-size: 0.8rem;
   font-weight: 700;
-  color: #333;
+  color: #64748b;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  display: block;
 }
 
-.item-solicitacao {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.2rem 0; /* Espaçamento aumentado */
-  font-size: 1.15rem; /* Fonte aumentada */
-  font-weight: 500;
-  color: #555;
-  background: none;
+.btn-submit-edu {
+  background: #1f1e30;
+  color: #d8f17b;
   border: none;
-  border-bottom: 1px solid #f0f0f0;
-  text-align: left;
-  transition: padding-left 0.3s;
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  font-weight: bold;
+  margin-top: 10px;
 }
 
-.item-solicitacao:hover {
-  color: #9b89d9;
-  padding-left: 10px;
+.card-table-clean {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #edf0f2;
 }
 
-.item-solicitacao i {
-  font-size: 0.9rem;
-  color: #ccc;
+.status-dot-badge {
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
 }
+
+.status-dot-badge.success { background: #e6fffa; color: #047481; }
+.status-dot-badge.warning { background: #fffaf0; color: #9c4221; }

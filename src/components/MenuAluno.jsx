@@ -25,6 +25,11 @@ export default function MenuAluno() {
         </NavLink>
       </li>
       <li className="nav-item mb-2">
+        <NavLink className="nav-link" to="/dashboard/salas">
+          <i className="bi bi-door-open-fill me-2"></i>Salas
+        </NavLink>
+      </li>
+      <li className="nav-item mb-2">
         <NavLink className="nav-link" to="/dashboard/requerimentos">
           <i className="bi bi-file-earmark-text-fill me-2"></i>Requerimentos
         </NavLink>
