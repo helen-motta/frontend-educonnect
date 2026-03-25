@@ -3,7 +3,14 @@ import api from './../api';
 import './GerenciarCursos.css';
 
 const VALORES_INICIAIS_DISCIPLINA = { nome: '', codigo: '', carga_horaria: 0, ementa: '', semestre: 1, id_curso: null };
-const VALORES_INICIAIS_CURSO = { nome: '', codigo: '', descricao: '', email_coordenador: '' };
+const VALORES_INICIAIS_CURSO = {
+  nome: '',
+  codigo: '',
+  descricao: '',
+  cargaHoraria: '',
+  modalidade: 1,
+  idCoordenador: '',
+};
 
 const MOCK_INSIGHTS = {
   reprovação: 18.5,
@@ -21,11 +28,16 @@ export default function GerenciarCursos() {
   const [loading, setLoading] = useState(true);
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [filtroNome, setFiltroNome] = useState('');
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   
-  const [showModal, setShowModal] = useState(false);
   const [showModalCurso, setShowModalCurso] = useState(false);
   const [showModalInsights, setShowModalInsights] = useState(false);
   const [cursoSelecionadoInsights, setCursoSelecionadoInsights] = useState(null);
+  const [cursoForm, setCursoForm] = useState(VALORES_INICIAIS_CURSO);
+  const [cursoEditando, setCursoEditando] = useState(null);
+  const [salvandoCurso, setSalvandoCurso] = useState(false);
+
+  const getCursoId = (curso) => curso?.id ?? curso?.Id;
 
   const carregarCursos = useCallback(async () => {
     setLoading(true);
@@ -43,6 +55,95 @@ export default function GerenciarCursos() {
 
   useEffect(() => { carregarCursos(); }, [carregarCursos]);
 
+  const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast((prev) => ({ ...prev, show: false })), 3000);
+  };
+
+  const abrirNovoCurso = () => {
+    setCursoEditando(null);
+    setCursoForm(VALORES_INICIAIS_CURSO);
+    setShowModalCurso(true);
+  };
+
+  const abrirEditarCurso = (curso) => {
+    setCursoEditando(curso);
+    setCursoForm({
+      nome: curso.nome ?? '',
+      codigo: curso.codigo ?? '',
+      descricao: curso.descricao ?? '',
+      cargaHoraria: curso.cargaHoraria ?? curso.carga_horaria ?? '',
+      modalidade: curso.modalidade ?? curso.Modalidade ?? 1,
+      idCoordenador: curso.idCoordenador ?? curso.IdCoordenador ?? '',
+    });
+    setShowModalCurso(true);
+  };
+
+  const handleCursoInputChange = (e) => {
+    const { name, value } = e.target;
+    setCursoForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSalvarCurso = async (e) => {
+    e.preventDefault();
+    setSalvandoCurso(true);
+
+    try {
+      const payload = {
+        Nome: cursoForm.nome.trim(),
+        Codigo: cursoForm.codigo.trim(),
+        Descricao: cursoForm.descricao?.trim() || null,
+        CargaHoraria: Number(cursoForm.cargaHoraria),
+        Modalidade: Number(cursoForm.modalidade),
+        IdCoordenador: Number(cursoForm.idCoordenador),
+      };
+
+      if (!payload.Nome || !payload.Codigo || payload.CargaHoraria <= 0 || payload.IdCoordenador <= 0) {
+        showToast('Preencha os campos obrigatorios com valores validos.', 'danger');
+        return;
+      }
+
+      const idCurso = getCursoId(cursoEditando);
+      if (idCurso) {
+        await api.put(`/cursos/${idCurso}`, payload);
+        showToast('Curso atualizado com sucesso!');
+      } else {
+        await api.post('/cursos', payload);
+        showToast('Curso cadastrado com sucesso!');
+      }
+
+      setShowModalCurso(false);
+      setCursoEditando(null);
+      setCursoForm(VALORES_INICIAIS_CURSO);
+      await carregarCursos();
+    } catch (error) {
+      console.error('Erro ao salvar curso:', error);
+      showToast('Erro ao salvar curso.', 'danger');
+    } finally {
+      setSalvandoCurso(false);
+    }
+  };
+
+  const handleExcluirCurso = async (curso) => {
+    const idCurso = getCursoId(curso);
+    if (!idCurso) {
+      showToast('Nao foi possivel identificar o curso para exclusao.', 'danger');
+      return;
+    }
+
+    const confirmado = window.confirm(`Tem certeza que deseja deletar o curso "${curso.nome}"?`);
+    if (!confirmado) return;
+
+    try {
+      await api.delete(`/cursos/${idCurso}`);
+      showToast('Curso deletado com sucesso!');
+      await carregarCursos();
+    } catch (error) {
+      console.error('Erro ao deletar curso:', error);
+      showToast('Erro ao deletar curso.', 'danger');
+    }
+  };
+
   const handleOpenInsights = (curso) => {
     setCursoSelecionadoInsights(curso);
     setShowModalInsights(true);
@@ -56,10 +157,17 @@ export default function GerenciarCursos() {
           <h1 className="display-6 fw-bold text-dark mb-1">Painel do Coordenador</h1>
           <p className="text-secondary mb-0">Monitoramento acadêmico e gestão de matriz curricular.</p>
         </div>
-        <button className="btn btn-primary btn-lg shadow-sm px-4" onClick={() => setShowModalCurso(true)}>
+        <button className="btn btn-primary btn-lg shadow-sm px-4" onClick={abrirNovoCurso}>
           <i className="bi bi-plus-lg me-2"></i>Novo Curso
         </button>
       </header>
+
+      {toast.show && (
+        <div className={`alert alert-${toast.type} alert-dismissible fade show`} role="alert">
+          {toast.message}
+          <button type="button" className="btn-close" onClick={() => setToast((prev) => ({ ...prev, show: false }))}></button>
+        </div>
+      )}
 
       {/* CARDS KPIS */}
       <div className="row g-4 mb-5">
@@ -99,16 +207,37 @@ export default function GerenciarCursos() {
         {loading ? (
           <div className="text-center py-5 bg-white"><div className="spinner-grow text-primary"></div></div>
         ) : (
-          cursos.map(curso => (
-            <div className="accordion-item border-0 border-bottom" key={curso.id}>
+          cursos.map(curso => {
+            const idCurso = getCursoId(curso);
+
+            return (
+            <div className="accordion-item border-0 border-bottom" key={idCurso ?? curso.codigo ?? curso.nome}>
               <div className="accordion-header d-flex align-items-center bg-white py-2 px-3">
-                <button className="accordion-button collapsed shadow-none" type="button" data-bs-toggle="collapse" data-bs-target={`#collapse-${curso.id}`}>
+                <button className="accordion-button collapsed shadow-none" type="button" data-bs-toggle="collapse" data-bs-target={`#collapse-${idCurso}`}>
                   <div className="d-flex flex-column">
                     <span className="h5 fw-bold mb-0">{curso.nome}</span>
                     <span className="text-muted small">Cód: {curso.codigo}</span>
                   </div>
                 </button>
                 <div className="header-actions pe-3">
+                  <button
+                    className="btn btn-outline-primary btn-sm me-2"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      abrirEditarCurso(curso);
+                    }}
+                  >
+                    <i className="bi bi-pencil-square me-1"></i>Editar Curso
+                  </button>
+                  <button
+                    className="btn btn-outline-danger btn-sm me-2"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleExcluirCurso(curso);
+                    }}
+                  >
+                    <i className="bi bi-trash3 me-1"></i>Deletar Curso
+                  </button>
                   <button className="btn btn-insight btn-sm d-flex align-items-center gap-2 px-3 py-2 rounded-3" onClick={(e) => { e.stopPropagation(); handleOpenInsights(curso); }}>
                     <i className="bi bi-graph-up-arrow text-warning"></i>
                     <span>Insights</span>
@@ -116,7 +245,7 @@ export default function GerenciarCursos() {
                 </div>
               </div>
 
-              <div id={`collapse-${curso.id}`} className="accordion-collapse collapse" data-bs-parent="#accordionCursos">
+              <div id={`collapse-${idCurso}`} className="accordion-collapse collapse" data-bs-parent="#accordionCursos">
                 <div className="accordion-body bg-light-subtle p-0">
                    {/* TABELA DE DISCIPLINAS */}
                    <table className="table table-hover align-middle mb-0 bg-white">
@@ -148,9 +277,109 @@ export default function GerenciarCursos() {
                 </div>
               </div>
             </div>
-          ))
+          )})
         )}
       </div>
+
+      {showModalCurso && (
+        <div className="modal-custom-overlay">
+          <div className="modal-custom-content shadow-lg rounded-4 overflow-hidden">
+            <div className="modal-custom-header bg-primary text-white p-4">
+              <div>
+                <h4 className="fw-bold mb-1">{cursoEditando ? 'Editar Curso' : 'Novo Curso'}</h4>
+                <p className="mb-0 opacity-75">Preencha as informacoes do curso.</p>
+              </div>
+              <button className="btn-close btn-close-white" onClick={() => setShowModalCurso(false)}></button>
+            </div>
+
+            <form onSubmit={handleSalvarCurso}>
+              <div className="p-4 bg-light">
+                <div className="row g-3">
+                  <div className="col-md-6">
+                    <label className="form-label fw-bold">Nome</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      name="nome"
+                      value={cursoForm.nome}
+                      onChange={handleCursoInputChange}
+                      required
+                    />
+                  </div>
+                  <div className="col-md-6">
+                    <label className="form-label fw-bold">Codigo</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      name="codigo"
+                      value={cursoForm.codigo}
+                      onChange={handleCursoInputChange}
+                      required
+                    />
+                  </div>
+                  <div className="col-12">
+                    <label className="form-label fw-bold">Descricao</label>
+                    <textarea
+                      className="form-control"
+                      rows="3"
+                      name="descricao"
+                      value={cursoForm.descricao}
+                      onChange={handleCursoInputChange}
+                    />
+                  </div>
+                  <div className="col-md-4">
+                    <label className="form-label fw-bold">Carga Horaria</label>
+                    <input
+                      type="number"
+                      min="1"
+                      className="form-control"
+                      name="cargaHoraria"
+                      value={cursoForm.cargaHoraria}
+                      onChange={handleCursoInputChange}
+                      required
+                    />
+                  </div>
+                  <div className="col-md-4">
+                    <label className="form-label fw-bold">Modalidade</label>
+                    <select
+                      className="form-select"
+                      name="modalidade"
+                      value={cursoForm.modalidade}
+                      onChange={handleCursoInputChange}
+                      required
+                    >
+                      <option value={1}>Presencial</option>
+                      <option value={2}>EAD</option>
+                      <option value={3}>Hibrido</option>
+                    </select>
+                  </div>
+                  <div className="col-md-4">
+                    <label className="form-label fw-bold">ID do Coordenador</label>
+                    <input
+                      type="number"
+                      min="1"
+                      className="form-control"
+                      name="idCoordenador"
+                      value={cursoForm.idCoordenador}
+                      onChange={handleCursoInputChange}
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white p-3 border-top d-flex justify-content-end gap-2">
+                <button type="button" className="btn btn-outline-secondary" onClick={() => setShowModalCurso(false)}>
+                  Cancelar
+                </button>
+                <button type="submit" className="btn btn-primary" disabled={salvandoCurso}>
+                  {salvandoCurso ? 'Salvando...' : cursoEditando ? 'Salvar alteracoes' : 'Criar curso'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* MODAL DE INSIGHTS - CENTRALIZADO E SEM ALERTAS */}
       {showModalInsights && cursoSelecionadoInsights && (

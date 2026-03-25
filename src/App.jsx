@@ -11,6 +11,7 @@ import NotasFrequencia from './components/NotasFrequencia';
 import Calendario from './components/Calendario';
 import Carteirinha from './components/Carteirinha';
 import MinhasTurmas from './components/MinhasTurmas';
+import AtividadesTurma from './components/AtividadesTurma';
 import Comunicados from './components/Comunicados';
 import GerenciarUsuarios from './components/GerenciarUsuarios';
 import GerenciarCursos from './components/GerenciarCursos';
@@ -19,7 +20,6 @@ import LogsSistema from './components/LogsSistema';
 import GerenciarTurmas from './components/GerenciarTurmas';
 import GerenciarRequerimentos from './components/GerenciarRequerimentos';
 import ConfiguracoesPortal from './components/ConfiguracoesPortal';
-import CalendarioProfessor from './components/CalendarioProfessor';
 import Salas from './components/Salas';
 import Perfil from './components/Perfil';
 import ConfiguracoesPerfil from './components/ConfiguracoesPerfil';
@@ -29,38 +29,60 @@ import RedefinirSenha from './components/RedefinirSenha';
 import { ThemeProvider } from './components/ThemeContext';
 import { AuthProvider } from './components/AuthContext';
 import PrivateRoute from './components/PrivateRoute';
+import ErrorBoundary from './components/ErrorBoundary';
+
+const PUBLIC_ROUTES = [
+  { path: '/login', element: <Login /> },
+  { path: '/redefinir-senha', element: <RedefinirSenha /> },
+  { path: '/boas-vindas', element: <BoasVindas /> },
+  { path: '/inscricao', element: <Inscricao /> },
+];
+
+const DASHBOARD_ROUTES = [
+  { path: 'inicio', element: <InicioRouter /> },
+  { path: 'perfil', element: <Perfil /> },
+  { path: 'configuracoes', element: <ConfiguracoesPerfil /> },
+  { path: 'requerimentos', element: <Requerimentos /> },
+  { path: 'matricula', element: <Matricula /> },
+  { path: 'horarios', element: <Horarios /> },
+  { path: 'notasfrequencia', element: <NotasFrequencia /> },
+  { path: 'calendario', element: <Calendario /> },
+  { path: 'carteirinha', element: <Carteirinha /> },
+  { path: 'minhas-turmas', element: <MinhasTurmas /> },
+  { path: 'atividades-turma', element: <AtividadesTurma /> },
+  { path: 'comunicados', element: <Comunicados /> },
+  { path: 'salas', element: <Salas /> },
+  { path: 'gerenciar-usuarios', element: <GerenciarUsuarios /> },
+  { path: 'gerenciar-cursos', element: <GerenciarCursos /> },
+  { path: 'logs', element: <LogsSistema /> },
+  { path: 'gerenciar-turmas', element: <GerenciarTurmas /> },
+  { path: 'gerenciar-requerimentos', element: <GerenciarRequerimentos /> },
+  { path: 'configuracoes-portal', element: <ConfiguracoesPortal /> },
+  { path: 'calendario-professor', element: <Calendario /> },
+];
 
 function App() {
+  const protectedDashboard = (
+    <PrivateRoute>
+      <ErrorBoundary>
+        <Dashboard />
+      </ErrorBoundary>
+    </PrivateRoute>
+  );
+
   return (
     <ThemeProvider>
     <BrowserRouter>
     <AuthProvider>
       <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/redefinir-senha" element={<RedefinirSenha />} />
-        <Route path="/boas-vindas" element={<BoasVindas />} />
-        <Route path="/inscricao" element={<Inscricao />} />
+        {PUBLIC_ROUTES.map((route) => (
+          <Route key={route.path} path={route.path} element={route.element} />
+        ))}
 
-        <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>}>
-          <Route path="inicio" element={<InicioRouter />} />
-          <Route path="perfil" element={<Perfil />} />
-          <Route path="configuracoes" element={<ConfiguracoesPerfil />} />
-          <Route path="requerimentos" element={<Requerimentos />} />
-          <Route path="matricula" element={<Matricula />} />
-          <Route path="horarios" element={<Horarios />} />
-          <Route path="notasfrequencia" element={<NotasFrequencia />} />
-          <Route path="calendario" element={<Calendario />} />
-          <Route path="carteirinha" element={<Carteirinha />} />
-          <Route path="minhas-turmas" element={<MinhasTurmas />} />
-          <Route path="comunicados" element={<Comunicados />} />
-          <Route path="salas" element={<Salas />} />
-          <Route path="gerenciar-usuarios" element={<GerenciarUsuarios />} />
-          <Route path="gerenciar-cursos" element={<GerenciarCursos />} />
-          <Route path="logs" element={<LogsSistema />} />
-          <Route path="gerenciar-turmas" element={<GerenciarTurmas />} />
-          <Route path="gerenciar-requerimentos" element={<GerenciarRequerimentos />} />
-          <Route path="configuracoes-portal" element={<ConfiguracoesPortal />} />
-          <Route path="calendario-professor" element={<CalendarioProfessor />} />
+        <Route path="/dashboard" element={protectedDashboard}>
+          {DASHBOARD_ROUTES.map((route) => (
+            <Route key={route.path} path={route.path} element={route.element} />
+          ))}
         </Route>
 
         <Route path="*" element={<Navigate to="/login" replace />} />

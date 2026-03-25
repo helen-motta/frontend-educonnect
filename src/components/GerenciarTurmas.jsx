@@ -29,23 +29,16 @@ export default function GerenciarTurmas() {
   const carregarDadosIniciais = async () => {
     try {
       setLoading(true);
-      
-      // 1. Busca turmas filtradas pelo professor logado (Use Case do Back)
-      const resTurmas = await api.get(`$/turmas`, {
-        params: { professorId: professorLogadoId }
-      });
 
-      // 2. Busca cursos para preencher o Modal de criação
-      const resCursos = await api.get(`$/cursos`);
-
-      // 3. Busca disciplinas do professor com todos os detalhes
-      const resDisciplinas = await api.get('/turmas/professor');
+      const [resTurmas, resCursos] = await Promise.all([
+        api.get('/turmas/professor'),   // JWT identifica o professor
+        api.get('/cursos')
+      ]);
 
       setTurmas(resTurmas.data);
       setCursos(resCursos.data);
-      
-      // Mapeia as disciplinas do endpoint para o componente
-      const disciplinasFormatadas = resDisciplinas.data.map(turma => ({
+
+      const disciplinasFormatadas = resTurmas.data.map(turma => ({
         id: turma.id,
         nome: `${turma.nomeTurma} - ${turma.disciplinaNome}`,
         disciplinaNome: turma.disciplinaNome,
@@ -54,11 +47,11 @@ export default function GerenciarTurmas() {
         quantidadeInscritos: turma.quantidadeInscritos,
         vagas: turma.vagas
       }));
-      
+
       setDisciplinas(disciplinasFormatadas);
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
-      alert("Erro ao conectar com o servidor C#.");
+      alert("Erro ao conectar com o servidor.");
     } finally {
       setLoading(false);
     }

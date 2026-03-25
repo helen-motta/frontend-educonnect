@@ -1,32 +1,83 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import api from '../api';
 
 export default function InicioAdm() {
-  
-  // --- MOCK DE DADOS (Simula dados vindos do backend) ---
-  const stats = {
-    totalAlunos: 1245,
-    totalProfessores: 87,
-    totalStaff: 12,
-    failedLogins24h: 14,
-    contasBloqueadas: 2,
-    serverStatus: 'Online',
-    dbStatus: 'Conectado',
-    diskUsageApp: 75,
-  };
+  const [stats, setStats] = useState({
+    totalAlunos: 0,
+    totalProfessores: 0,
+    totalStaff: 0,
+    failedLogins24h: 0,
+    contasBloqueadas: 0,
+    serverStatus: 'Indisponivel',
+    dbStatus: 'Indisponivel',
+    diskUsageApp: 0,
+  });
+  const [recentLogs, setRecentLogs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  // --- MUDANÇA AQUI: Removidos 'icon' e 'color' ---
-  const recentLogs = [
-    { id: 1, user: 'prof.silva@edu.com', msg: 'Atualizou as notas de Cálculo I.', time: '5 min atrás' },
-    { id: 2, user: 'coord.ana@edu.com', msg: 'Criou a turma "Física II - Turma C".', time: '12 min atrás' },
-    { id: 3, user: 'admin@edu.com', msg: 'Excluiu o usuário "aluno.joao@edu.com".', time: '20 min atrás' },
-    { id: 4, user: 'coord.ana@edu.com', msg: 'Editou a disciplina "Álgebra Linear".', time: '45 min atrás' },
-  ];
-  // -----------------------------------------------------------
+  useEffect(() => {
+    let ativo = true;
+
+    const carregarDashboard = async () => {
+      setLoading(true);
+      setError('');
+
+      try {
+        const response = await api.get('/audit/dashboard', { params: { logsLimit: 10 } });
+        const data = response?.data ?? {};
+        const rawStats = data.stats ?? data.Stats ?? {};
+        const rawLogs = data.recentLogs ?? data.RecentLogs ?? [];
+
+        if (!ativo) return;
+
+        setStats({
+          totalAlunos: rawStats.totalAlunos ?? rawStats.TotalAlunos ?? 0,
+          totalProfessores: rawStats.totalProfessores ?? rawStats.TotalProfessores ?? 0,
+          totalStaff: rawStats.totalStaff ?? rawStats.TotalStaff ?? 0,
+          failedLogins24h: rawStats.failedLogins24h ?? rawStats.FailedLogins24h ?? 0,
+          contasBloqueadas: rawStats.contasBloqueadas ?? rawStats.ContasBloqueadas ?? 0,
+          serverStatus: rawStats.serverStatus ?? rawStats.ServerStatus ?? 'Indisponivel',
+          dbStatus: rawStats.dbStatus ?? rawStats.DbStatus ?? 'Indisponivel',
+          diskUsageApp: rawStats.diskUsageApp ?? rawStats.DiskUsageApp ?? 0,
+        });
+
+        setRecentLogs(
+          rawLogs.map((log, idx) => ({
+            id: log.id ?? log.Id ?? idx,
+            user: log.user ?? log.User ?? 'sistema',
+            msg: log.msg ?? log.Msg ?? 'Registrou uma atividade no sistema.',
+            time: log.time ?? log.Time ?? 'agora',
+          }))
+        );
+      } catch (err) {
+        if (!ativo) return;
+        setError('Nao foi possivel carregar os dados do dashboard.');
+        setStats((prev) => ({
+          ...prev,
+          serverStatus: 'Offline',
+          dbStatus: 'Indisponivel',
+        }));
+      } finally {
+        if (ativo) {
+          setLoading(false);
+        }
+      }
+    };
+
+    carregarDashboard();
+
+    return () => {
+      ativo = false;
+    };
+  }, []);
   
   return (
     <>
       <h2 className="mb-4">Dashboard de Administração (TI)</h2>
+
+      {error && <div className="alert alert-warning">{error}</div>}
 
       {/* --- LINHA 1: Resumo e Saúde --- */}
       <div className="row g-4 mb-4">
@@ -44,7 +95,7 @@ export default function InicioAdm() {
                   <div className="card text-center h-100 border-0 bg-light">
                     <div className="card-body">
                       <i className="bi bi-person-fill fs-2 text-primary"></i>
-                      <h4 className="mb-0 mt-2">{stats.totalAlunos}</h4>
+                      <h4 className="mb-0 mt-2">{loading ? '...' : stats.totalAlunos}</h4>
                       <small className="text-muted">Alunos Ativos</small>
                     </div>
                   </div>
@@ -54,7 +105,7 @@ export default function InicioAdm() {
                   <div className="card text-center h-100 border-0 bg-light">
                     <div className="card-body">
                       <i className="bi bi-person-workspace fs-2 text-success"></i>
-                      <h4 className="mb-0 mt-2">{stats.totalProfessores}</h4>
+                      <h4 className="mb-0 mt-2">{loading ? '...' : stats.totalProfessores}</h4>
                       <small className="text-muted">Professores</small>
                     </div>
                   </div>
@@ -64,7 +115,7 @@ export default function InicioAdm() {
                   <div className="card text-center h-100 border-0 bg-light">
                     <div className="card-body">
                       <i className="bi bi-person-badge fs-2 text-info"></i>
-                      <h4 className="mb-0 mt-2">{stats.totalStaff}</h4>
+                      <h4 className="mb-0 mt-2">{loading ? '...' : stats.totalStaff}</h4>
                       <small className="text-muted">Staff (Admin/Coord.)</small>
                     </div>
                   </div>
@@ -86,17 +137,21 @@ export default function InicioAdm() {
             </div>
             <div className="card-body p-0">
               <div className="list-group list-group-flush">
-                {/* O .map() agora usa o novo mock focado em CRUD */}
-                {recentLogs.map(log => (
-                  // --- MUDANÇA AQUI: Removido o elemento <i> ---
-                  <div key={log.id} className="list-group-item d-flex align-items-center py-3">
-                    <div className="flex-grow-1">
-                      <strong className="me-1">{log.user}</strong>
-                      {log.msg}
+                {loading ? (
+                  <div className="list-group-item py-3 text-muted">Carregando atividades...</div>
+                ) : recentLogs.length === 0 ? (
+                  <div className="list-group-item py-3 text-muted">Nenhuma atividade recente.</div>
+                ) : (
+                  recentLogs.map((log) => (
+                    <div key={log.id} className="list-group-item d-flex align-items-center py-3">
+                      <div className="flex-grow-1">
+                        <strong className="me-1">{log.user}</strong>
+                        {log.msg}
+                      </div>
+                      <small className="text-muted ms-3">{log.time}</small>
                     </div>
-                    <small className="text-muted ms-3">{log.time}</small>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
             <div className="card-footer bg-white text-center">
@@ -119,7 +174,7 @@ export default function InicioAdm() {
                     <small className="text-muted">Tentativas de acesso bloqueadas.</small>
                   </div>
                   <span className={`badge ${stats.failedLogins24h > 10 ? 'bg-danger' : 'bg-warning text-dark'} fs-6`}>
-                    {stats.failedLogins24h}
+                    {loading ? '...' : stats.failedLogins24h}
                   </span>
                 </li>
                 <li className="list-group-item d-flex justify-content-between align-items-center px-0">
@@ -128,7 +183,7 @@ export default function InicioAdm() {
                     <small className="text-muted">Usuários bloqueados por segurança.</small>
                   </div>
                   <span className={`badge ${stats.contasBloqueadas > 0 ? 'bg-danger' : 'bg-secondary'} fs-6`}>
-                    {stats.contasBloqueadas}
+                    {loading ? '...' : stats.contasBloqueadas}
                   </span>
                 </li>
               </ul>

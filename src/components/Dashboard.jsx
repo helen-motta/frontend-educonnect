@@ -8,29 +8,14 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "./Dashboard.css";
 
-import MenuAluno from "./MenuAluno";
-import MenuProfessor from "./MenuProfessor";
-import MenuAdm from "./MenuAdm";
-import MenuCoordenador from "./MenuCoordenador";
-
-const getTitulo = (role) => {
-  switch (role) {
-    case 4:
-      return "Portal do Aluno";
-    case 3:
-      return "Portal do Professor";
-    case 2:
-      return "Painel do Coordenador";
-    case 1:
-      return "Painel de Administração";
-    default:
-      return "Dashboard";
-  }
-};
+import MenuList from "./MenuList";
+import { getProfileMenuItems, getProfileTitle } from "./navigation/profileConfig";
 
 export default function Dashboard() {
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
+  const profileId = user?.usuario?.idPerfil;
+  const menuItems = getProfileMenuItems(profileId);
 
   const [notifOpen, setNotifOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
@@ -99,16 +84,13 @@ export default function Dashboard() {
         <hr />
 
         <ul className="nav nav-pills flex-column mb-auto">
-          {user.usuario.idPerfil === 1 && <MenuAdm />}
-          {user.usuario.idPerfil === 2 && <MenuCoordenador />}
-          {user.usuario.idPerfil === 3 && <MenuProfessor />}
-          {user.usuario.idPerfil === 4 && <MenuAluno />}
+          <MenuList items={menuItems} />
         </ul>
       </nav>
 
       <main className="flex-grow-1 p-4 main-content">
         <header className="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
-          <h3 className="mb-0">{getTitulo(user.usuario.idPerfil)}</h3>
+          <h3 className="mb-0">{getProfileTitle(profileId)}</h3>
 
           <div
             className="d-flex align-items-center position-relative"
