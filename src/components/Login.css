@@ -102,3 +102,61 @@
 #chapeu-5 { bottom: 33%; left: 46%; max-width: 17%; animation-delay: -0.3s; }
 #chapeu-6 { bottom: 41%; left: 60%; max-width: 16%; animation-delay: 0.4s; }
 #chapeu-7 { bottom: 30%; left: 75%; max-width: 13%; animation-delay: -0.8s; }
+
+/* === Modal minimalista - estilo EduConnect clean === */
+.simple-modal {
+  border-radius: 6px;
+  border: 1px solid #e6e6e6;
+  background-color: #fff;
+  transition: all 0.25s ease;
+}
+
+.simple-modal .modal-title {
+  font-size: 1.1rem;
+  color: #222;
+  letter-spacing: 0.2px;
+}
+
+.simple-modal .modal-body {
+  padding: 1.5rem 2rem 1rem;
+}
+
+.simple-modal .form-control {
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  font-size: 0.95rem;
+}
+
+.simple-modal .form-control:focus {
+  border-color: #d8f17b;
+  box-shadow: none;
+}
+
+.simple-modal .btn {
+  font-size: 0.95rem;
+  padding: 0.45rem 1.2rem;
+}
+
+.simple-modal .btn-light {
+  border: 1px solid #ddd;
+  color: #333;
+  background-color: #fafafa;
+}
+
+.simple-modal .btn-light:hover {
+  background-color: #f1f1f1;
+}
+
+.simple-modal .btn-primary {
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.simple-modal .btn-primary:hover:enabled {
+  background-color: #cbe167 !important;
+}
+
+.simple-modal .btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

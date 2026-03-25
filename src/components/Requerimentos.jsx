@@ -1,133 +1,150 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
+import api from './../api';
+import './Requerimentos.css';
+
+const TIPOS_REQUERIMENTO = [
+  { id: 'trancamento', nome: 'Trancamento de Matrícula', icone: 'bi-pause-circle' },
+  { id: 'quebra', nome: 'Quebra de Pré-requisito', icone: 'bi-diagram-3' },
+  { id: 'aproveitamento', nome: 'Aproveitamento de Estudos', icone: 'bi-mortarboard' },
+  { id: 'outros', nome: 'Outras Solicitações', icone: 'bi-chat-left-dots' },
+];
+
+const MOCK_SOLICITACOES = [
+  { id: 101, tipo: 'Passe Escolar', data: '02/03/2024', status: 'Concluído', cor: 'success' },
+  { id: 102, tipo: 'Trancamento de Matrícula', data: '04/03/2024', status: 'Em Análise', cor: 'warning' },
+];
 
 export default function Requerimentos() {
+  const [abaAtiva, setAbaAtiva] = useState('novo');
+  const [tipoSelecionado, setTipoSelecionado] = useState(null);
+  const [observacao, setObservacao] = useState('');
+  const [arquivo, setArquivo] = useState(null);
+  const [enviando, setEnviando] = useState(false);
+  
+  const fileInputRef = useRef(null);
 
-  // Função 'placeholder' para simular o clique
-  const handleGerarDocumento = (nomeDocumento) => {
-    alert(`Iniciando a geração do documento: ${nomeDocumento}\n(Esta função será implementada no futuro)`);
-  };
-
-  // Função 'placeholder' para simular a abertura de um formulário
-  const handleNovaSolicitacao = (nomeSolicitacao) => {
-    alert(`Abrindo formulário para: ${nomeSolicitacao}\n(Esta função será implementada no futuro)`);
+  const handleNovaSolicitacao = async (e) => {
+    e.preventDefault();
+    setEnviando(true);
+    // Simulação de envio
+    setTimeout(() => {
+      setEnviando(false);
+      setAbaAtiva('acompanhar');
+      setTipoSelecionado(null);
+      setObservacao('');
+      setArquivo(null);
+    }, 1500);
   };
 
   return (
-    <>
-      <h2 className="mb-4">Requerimentos e Documentos</h2>
-
-      <div className="row g-4">
-
-        {/* --- COLUNA DA ESQUERDA (Documentos de Download) --- */}
-        <div className="col-lg-8">
-          <h4 className="mb-3">Documentos para Download</h4>
-          <p className="text-muted">Gere e baixe seus documentos acadêmicos mais comuns de forma instantânea.</p>
-          
-          <div className="row g-4">
-            
-            {/* Card 1: Comprovante de Matrícula */}
-            <div className="col-md-6">
-              <div className="card shadow-sm border-0 h-100">
-                <div className="card-body text-center p-4">
-                  <i className="bi bi-file-earmark-person-fill fs-1 text-primary"></i>
-                  <h5 className="card-title mt-3 mb-2">Comprovante de Matrícula</h5>
-                  <p className="card-text small text-muted">Gere seu comprovante oficial de matrícula para o semestre atual.</p>
-                  <button 
-                    className="btn btn-primary" 
-                    onClick={() => handleGerarDocumento('Comprovante de Matrícula')}
-                  >
-                    <i className="bi bi-download me-2"></i>Gerar PDF
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Card 2: Boletim / Histórico */}
-            <div className="col-md-6">
-              <div className="card shadow-sm border-0 h-100">
-                <div className="card-body text-center p-4">
-                  <i className="bi bi-file-earmark-bar-graph-fill fs-1 text-success"></i>
-                  <h5 className="card-title mt-3 mb-2">Boletim / Histórico</h5>
-                  <p className="card-text small text-muted">Baixe seu boletim com notas e frequências ou seu histórico escolar completo.</p>
-                  <button 
-                    className="btn btn-success" 
-                    onClick={() => handleGerarDocumento('Boletim/Histórico')}
-                  >
-                    <i className="bi bi-download me-2"></i>Gerar PDF
-                  </button>
-                </div>
-              </div>
-            </div>
-            
-            {/* Card 3: Declaração Financeira (Exemplo) */}
-            <div className="col-md-6">
-              <div className="card shadow-sm border-0 h-100">
-                <div className="card-body text-center p-4">
-                  <i className="bi bi-file-earmark-ruled-fill fs-1 text-info"></i>
-                  <h5 className="card-title mt-3 mb-2">Declaração Financeira</h5>
-                  <p className="card-text small text-muted">Gere um comprovante de quitação ou status dos seus pagamentos.</p>
-                  <button 
-                    className="btn btn-info" 
-                    onClick={() => handleGerarDocumento('Declaração Financeira')}
-                  >
-                    <i className="bi bi-download me-2"></i>Gerar PDF
-                  </button>
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        {/* --- COLUNA DA DIREITA (Solicitações Especiais) --- */}
-        <div className="col-lg-4">
-          <div className="card shadow-sm border-0">
-            <div className="card-header py-3">
-              <h5 className="mb-0">Abrir uma Solicitação</h5>
-            </div>
-            <div className="card-body">
-              <p className="text-muted small">Precisa de algo mais específico? Abra um requerimento e acompanhe o status.</p>
-              
-              {/* Lista de links para os formulários */}
-              <div className="list-group list-group-flush">
-                <a 
-                  href="#" 
-                  className="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
-                  onClick={(e) => { e.preventDefault(); handleNovaSolicitacao('Trancamento de Matrícula'); }}
-                >
-                  Trancamento de Matrícula
-                  <i className="bi bi-chevron-right"></i>
-                </a>
-                <a 
-                  href="#" 
-                  className="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
-                  onClick={(e) => { e.preventDefault(); handleNovaSolicitacao('Quebra de Pré-requisito'); }}
-                >
-                  Quebra de Pré-requisito
-                  <i className="bi bi-chevron-right"></i>
-                </a>
-                <a 
-                  href="#" 
-                  className="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
-                  onClick={(e) => { e.preventDefault(); handleNovaSolicitacao('Aproveitamento de Estudos'); }}
-                >
-                  Aproveitamento de Estudos
-                  <i className="bi bi-chevron-right"></i>
-                </a>
-                <a 
-                  href="#" 
-                  className="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
-                  onClick={(e) => { e.preventDefault(); handleNovaSolicitacao('Outras Solicitações'); }}
-                >
-                  Outras Solicitações
-                  <i className="bi bi-chevron-right"></i>
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-
+    <div className="req-container">
+      <div className="req-header mb-5">
+        <h2 className="fw-bold">Serviços Acadêmicos</h2>
+        <p className="text-muted">Gerencie seus documentos e solicitações em um só lugar.</p>
       </div>
-    </>
+
+      {/* DOCUMENTOS RÁPIDOS - CLEAN CARDS */}
+      <div className="row g-3 mb-5">
+        {['Comprovante de Matrícula', 'Histórico Escolar'].map((doc, i) => (
+          <div className="col-md-6" key={i}>
+            <div className="doc-quick-card">
+              <i className="bi bi-file-earmark-pdf text-muted fs-4"></i>
+              <span className="flex-grow-1 ms-3 fw-medium">{doc}</span>
+              <button className="btn-icon-download"><i className="bi bi-download"></i></button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* TABS NAVEGAÇÃO */}
+      <div className="req-tabs mb-4">
+        <button className={abaAtiva === 'novo' ? 'active' : ''} onClick={() => setAbaAtiva('novo')}>Novo Pedido</button>
+        <button className={abaAtiva === 'acompanhar' ? 'active' : ''} onClick={() => setAbaAtiva('acompanhar')}>Meus Requerimentos</button>
+      </div>
+
+      {abaAtiva === 'novo' ? (
+        <div className="row g-4">
+          <div className="col-lg-4">
+            <div className="type-selector-grid">
+              {TIPOS_REQUERIMENTO.map((item) => (
+                <div 
+                  key={item.id} 
+                  className={`type-card ${tipoSelecionado?.id === item.id ? 'selected' : ''}`}
+                  onClick={() => setTipoSelecionado(item)}
+                >
+                  <i className={`bi ${item.icone}`}></i>
+                  <span>{item.nome}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="col-lg-8">
+            {tipoSelecionado ? (
+              <div className="form-clean-card animate__animated animate__fadeIn">
+                <form onSubmit={handleNovaSolicitacao}>
+                  <div className="mb-4">
+                    <label className="form-label-clean">Descreva sua necessidade</label>
+                    <textarea 
+                      className="form-control-clean" 
+                      rows="4" 
+                      placeholder="Detalhes importantes para agilizar seu processo..."
+                      value={observacao}
+                      onChange={(e) => setObservacao(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  {/* NOVO BOTÃO DE ANEXO CLEAN */}
+                  <div className="mb-4">
+                    <label className="form-label-clean">Anexar Comprovante (Opcional)</label>
+                    <div className={`file-drop-zone ${arquivo ? 'file-selected' : ''}`} onClick={() => fileInputRef.current.click()}>
+                      <input type="file" hidden ref={fileInputRef} onChange={(e) => setArquivo(e.target.files[0])} />
+                      <div className="d-flex align-items-center justify-content-center w-100">
+                        <i className={`bi ${arquivo ? 'bi-check2-circle' : 'bi-plus-lg'} me-2`}></i>
+                        <span className="small">{arquivo ? arquivo.name : 'Selecionar arquivo'}</span>
+                        {arquivo && <i className="bi bi-x ms-auto remove-file" onClick={(e) => { e.stopPropagation(); setArquivo(null); }}></i>}
+                      </div>
+                    </div>
+                  </div>
+
+                  <button type="submit" className="btn-submit-edu" disabled={enviando}>
+                    {enviando ? 'Enviando...' : 'Enviar Solicitação'}
+                  </button>
+                </form>
+              </div>
+            ) : (
+              <div className="empty-state-card">
+                <i className="bi bi-app-indicator"></i>
+                <p>Selecione um tipo de requerimento ao lado.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="card-table-clean animate__animated animate__fadeIn">
+          <table className="table m-0">
+            <thead>
+              <tr>
+                <th>Protocolo</th>
+                <th>Requerimento</th>
+                <th>Data</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {MOCK_SOLICITACOES.map((req) => (
+                <tr key={req.id}>
+                  <td className="text-muted fw-bold">#{req.id}</td>
+                  <td className="fw-medium">{req.tipo}</td>
+                  <td className="text-muted">{req.data}</td>
+                  <td><span className={`status-dot-badge ${req.cor}`}>{req.status}</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
   );
 }

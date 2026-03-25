@@ -1,0 +1,49 @@
+/* ESTRUTURA DO MODAL CUSTOM (Centralização Absoluta) */
+.modal-custom-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.6); /* Backdrop escuro azulado */
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center; /* Centraliza Vertical */
+    justify-content: center; /* Centraliza Horizontal */
+    z-index: 9999;
+    padding: 20px;
+  }
+  
+  .modal-custom-content {
+    background: white;
+    width: 100%;
+    max-width: 700px; /* Largura otimizada para leitura centralizada */
+    animation: modalEnter 0.3s ease-out;
+  }
+  
+  .modal-custom-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  /* ANIMAÇÃO DE ENTRADA */
+  @keyframes modalEnter {
+    from { opacity: 0; transform: scale(0.95) translateY(20px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  
+  /* ESTILOS INTERNOS (REAPROVEITADOS) */
+  .badge-soft-blue { background: #eff6ff; color: #1d4ed8; padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 0.75rem; }
+  .btn-insight { background-color: #f8fafc; border: 1px solid #e2e8f0; color: #475569; font-weight: 600; font-size: 0.85rem; }
+  .btn-insight:hover { background-color: #0f172a; color: white; }
+  
+  .custom-accordion .accordion-button:not(.collapsed) { background-color: transparent !important; color: #0d6efd !important; box-shadow: none !important; }
+  
+  .stat-card { transition: transform 0.2s; }
+  .stat-card:hover { transform: translateY(-5px); }
+  
+  .progress { background-color: #f1f5f9; }
+  .progress-bar { transition: width 1.5s ease-in-out; }
+  
+  .uppercase { text-transform: uppercase; letter-spacing: 1px; font-size: 0.75rem; }

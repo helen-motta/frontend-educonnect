@@ -1,5 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
-
+:root {
+  --color-primary: #d8f17b;
+  --color-primary-hover: #c9e067;
+  --color-primary-text: #333;
+  --color-border: #e3e6ea;
+  --color-bg-light: #fff;
+  --color-bg-hover: #f8f9fa;
+  --color-text-muted: #6c757d;
+}
 body {
   margin: 0;
   font-family: "Inter", sans-serif;
@@ -8,7 +16,12 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-button {
-  font-size: 0.6rem;
-  color:red;
+
+.btn-primary {
+  background-color: var(--color-primary)!important;
+  color: var(--color-primary-text);
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
 }

@@ -47,3 +47,73 @@ a {
   text-decoration: none;
   color: var(--bs-body-color);
 }
+
+
+[data-bs-theme="dark"] {
+  --bs-body-bg: #1f1e30; 
+}
+
+.dropdown-notifications .dropdown-scroll-area {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* Remove o padding padrão do <a> para o d-flex funcionar */
+.dropdown-notifications .dropdown-item {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  /* Garante que o texto possa quebrar */
+  white-space: normal;
+}
+
+/* Melhora a legibilidade do texto "small" */
+.dropdown-notifications .dropdown-item .small {
+  font-size: 0.75rem; /* 12px */
+}
+
+/* Estiliza o cabeçalho */
+.dropdown-notifications .dropdown-header {
+  padding: 1rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* Estiliza o rodapé */
+.dropdown-notifications .dropdown-footer-link {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--bs-primary);
+}
+
+.dropdown-notifications .dropdown-footer-link:hover {
+  background-color: var(--bs-light);
+}
+
+.dropdown-notifications {
+    padding: 0;
+    border-radius: 8px;
+}
+
+.dropdown-scroll-area::-webkit-scrollbar {
+    width: 6px;
+}
+
+.dropdown-scroll-area::-webkit-scrollbar-thumb {
+    background-color: #dee2e6;
+    border-radius: 10px;
+}
+
+.text-muted-extra-small {
+    font-size: 0.75rem;
+    color: #adb5bd;
+}
+
+/* Efeito para item não lido */
+.bg-light-subtle {
+    background-color: rgba(13, 110, 253, 0.05) !important;
+}
+
+.dropdown-item:active {
+    background-color: #e9ecef;
+    color: inherit;
+}

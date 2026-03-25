@@ -8,9 +8,9 @@ export default function Carteirinha() {
 
   // 2. Dados do Aluno (Mock)
   const dadosAluno = {
-    nome: "Nome Usuário Genérico",
-    curso: "Engenharia de Software",
-    ra: "123456789",
+    nome: "Helena Batista",
+    curso: "Engenharia Civil",
+    ra: "42610001",
     fotoUrl: "/imagens/usuario-generico.png", // Imagem que você já tem
     logoUrl: "/imagens/logo-educonnect.png", // Logo que você já tem
     validade: "12/2026"

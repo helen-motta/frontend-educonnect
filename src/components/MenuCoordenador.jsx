@@ -1,0 +1,7 @@
+import React from 'react';
+import MenuList from './MenuList';
+import { PROFILE_IDS, PROFILE_MENU_ITEMS } from './navigation/profileConfig';
+
+export default function MenuCoordenador() {
+  return <MenuList items={PROFILE_MENU_ITEMS[PROFILE_IDS.COORDENADOR]} />;
+}

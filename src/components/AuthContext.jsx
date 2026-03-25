@@ -1,71 +1,46 @@
-// src/components/AuthContext.jsx
-
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-// 1. Criar o Contexto
 const AuthContext = createContext();
 
-// 2. Criar o Provedor (o componente que vai gerenciar o estado)
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null); // 'user' será null ou um objeto {nome, role}
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // 3. A LÓGICA DE LOGIN (Onde a mágica acontece)
-  const login = (email) => {
-    // LÓGICA MOCKADA (sem banco de dados)
-    if (email === 'aluno@edu.com') {
-      const userData = {
-        nome: 'Aluno Genérico',
-        role: 'aluno',
-        fotoUrl: '/imagens/usuario-generico.png' 
-      };
-      setUser(userData);
-      navigate('/dashboard/inicio'); // Redireciona para o dashboard
-    } 
-    else if (email === 'prof@edu.com') {
-      const userData = {
-        nome: 'Prof. Genérico',
-        role: 'professor',
-        fotoUrl: '/imagens/usuario-generico.png' // Pode ser outra foto
-      };
-      setUser(userData);
-      navigate('/dashboard/inicio'); // Redireciona para o dashboard
+  useEffect(() => {
+    const savedUser = localStorage.getItem('@EduConnect:user');
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
     }
-    else if (email === 'adm@edu.com') {
-      const userData = {
-        nome: 'Admin',
-        role: 'admin',
-        fotoUrl: '/imagens/usuario-generico.png'
-      };
-      setUser(userData);
-      navigate('/dashboard/inicio'); // (Admin teria seu próprio dashboard)
-    }
-    else {
-      // Se o login falhar
-      alert('Credenciais inválidas. Use "aluno@edu.com", "prof@edu.com" ou "adm@edu.com" para testar.');
-    }
+    setLoading(false);
+  }, []);
+
+  const login = (userDataFromApi) => {
+    setUser(userDataFromApi);
+
+    localStorage.setItem('@EduConnect:user', JSON.stringify(userDataFromApi));
+    localStorage.setItem('@EduConnect:token', userDataFromApi.token);
+
+    navigate('/dashboard/inicio');
   };
 
-  // 4. A Lógica de Logout
   const logout = () => {
     setUser(null);
+    localStorage.removeItem('@EduConnect:user');
+    localStorage.removeItem('@EduConnect:token');
     navigate('/login');
   };
 
-  // 5. Disponibiliza o 'user', 'login', 'logout' para todo o App
   const value = {
     user,
+    loading,
     login,
     logout,
-    // Adiciona um booleano para facilitar as checagens
-    isAuthenticated: user !== null 
+    isAuthenticated: user !== null
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-// 6. Um "Hook" customizado para facilitar o uso
-export const useAuth = () => {
-  return useContext(AuthContext);
-};
+export const useAuth = () => useContext(AuthContext);
