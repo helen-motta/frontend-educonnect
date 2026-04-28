@@ -11,27 +11,57 @@ import TurmaActionCard from './minhasTurmas/TurmaActionCard';
 import './MinhasTurmas.css'; 
 
 export default function MinhasTurmas() {
+  const PROFESSOR_BASE = '/professor';
+
   const [turmasApi, setTurmasApi] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [loadingDetalhes, setLoadingDetalhes] = useState(false); // Novo state de loading para detalhes
+  const [loadingDetalhes, setLoadingDetalhes] = useState(false);
+  const [carregandoNotas, setCarregandoNotas] = useState(false);
+  const [salvandoChamada, setSalvandoChamada] = useState(false);
+  const [salvandoNotas, setSalvandoNotas] = useState(false);
 
   const [view, setView] = useState('selecionar_turma');
   const [turmaSelecionada, setTurmaSelecionada] = useState(null);
   const [chamada, setChamada] = useState({});
-  const [atividadeAtual, setAtividadeAtual] = useState(''); 
-  const [notasEditaveis, setNotasEditaveis] = useState({}); 
+  const [atividadeAtual, setAtividadeAtual] = useState('');
+  const [notasEditaveis, setNotasEditaveis] = useState({});
+
+  const extrairLista = (resposta) => {
+    if (Array.isArray(resposta?.data)) return resposta.data;
+    if (Array.isArray(resposta?.data?.data)) return resposta.data.data;
+    return [];
+  };
+
+  const formatarErroApi = (error, fallback) => {
+    return error?.response?.data?.message || fallback;
+  };
+
+  const normalizarTurma = (turma) => ({
+    id: turma.id ?? turma.Id,
+    nomeTurma: turma.nomeTurma ?? turma.NomeTurma ?? turma.nome ?? '',
+    disciplinaNome: turma.disciplinaNome ?? turma.DisciplinaNome ?? turma.disciplina?.nome ?? '',
+    horariosFormatados: turma.horariosFormatados ?? turma.HorariosFormatados ?? [],
+    quantidadeInscritos: turma.quantidadeInscritos ?? turma.QuantidadeInscritos ?? 0,
+  });
+
+  const normalizarAvaliacao = (avaliacao) => ({
+    id: avaliacao.id ?? avaliacao.Id,
+    nome: avaliacao.nome ?? avaliacao.Nome ?? 'Avaliacao',
+    peso: avaliacao.peso ?? avaliacao.Peso ?? 1,
+    dataPrevista: avaliacao.dataPrevista ?? avaliacao.DataPrevista ?? null,
+  });
 
   // --- BUSCA LISTA DE TURMAS (INICIAL) ---
   useEffect(() => {
     const buscarTurmas = async () => {
       try {
         setLoading(true);
-        const response = await api.get(`/turmas/professor`, {
-        });
-        setTurmasApi(response.data);
-        console.log("Turmas carregadas 1:", response.data);
+        const response = await api.get('/turmas/professor');
+        const turmas = extrairLista(response).map(normalizarTurma);
+        setTurmasApi(turmas);
       } catch (error) {
-        console.error("Erro ao carregar turmas:", error);
+        console.error('Erro ao carregar turmas:', error);
+        alert(formatarErroApi(error, 'Erro ao carregar turmas do professor.'));
       } finally {
         setLoading(false);
       }
@@ -39,85 +69,173 @@ export default function MinhasTurmas() {
     buscarTurmas();
   }, []);
 
-  // --- CARREGA NOTAS QUANDO MUDAR ATIVIDADE ---
-  const carregarNotasDaAtividade = (atividadeId, turma) => {
-    const notasIniciais = {};
-    turma.alunos.forEach(aluno => {
-      notasIniciais[aluno.id] = (aluno.notas && aluno.notas[atividadeId]) || null;
-    });
-    setNotasEditaveis(notasIniciais);
+  const carregarNotasDaAtividade = async (atividadeId, turma) => {
+    if (!turma || !atividadeId) {
+      setNotasEditaveis({});
+      return;
+    }
+
+    const atividadeNumerica = Number(atividadeId);
+    if (!Number.isFinite(atividadeNumerica) || atividadeNumerica <= 0) {
+      const notasIniciais = {};
+      turma.alunos.forEach((aluno) => {
+        notasIniciais[aluno.id] = (aluno.notas && aluno.notas[atividadeId]) || null;
+      });
+      setNotasEditaveis(notasIniciais);
+      return;
+    }
+
+    setCarregandoNotas(true);
+    try {
+      const respostas = await Promise.all(
+        turma.alunos
+          .filter((aluno) => Number.isFinite(Number(aluno.matriculaId)))
+          .map((aluno) =>
+            api
+              .get(`${PROFESSOR_BASE}/matriculas/${aluno.matriculaId}/notas`)
+              .then((response) => ({ alunoId: aluno.id, notas: extrairLista(response) }))
+          )
+      );
+
+      const notasIniciais = {};
+      turma.alunos.forEach((aluno) => {
+        notasIniciais[aluno.id] = null;
+      });
+
+      respostas.forEach(({ alunoId, notas }) => {
+        const notaDaAvaliacao = notas.find((nota) => {
+          const idAvaliacao = nota.idAvaliacao ?? nota.IdAvaliacao;
+          return Number(idAvaliacao) === atividadeNumerica;
+        });
+
+        if (notaDaAvaliacao) {
+          notasIniciais[alunoId] = notaDaAvaliacao.valorObtido ?? notaDaAvaliacao.ValorObtido ?? null;
+        }
+      });
+
+      setNotasEditaveis(notasIniciais);
+    } catch (error) {
+      console.error('Erro ao carregar notas da atividade:', error);
+      alert(formatarErroApi(error, 'Nao foi possivel carregar as notas da atividade.'));
+    } finally {
+      setCarregandoNotas(false);
+    }
   };
 
   useEffect(() => {
-    if (turmaSelecionada && turmaSelecionada.atividades?.length > 0) {
-      const primeiraAtividade = turmaSelecionada.atividades[0].id;
-      setAtividadeAtual(primeiraAtividade);
-      carregarNotasDaAtividade(primeiraAtividade, turmaSelecionada);
-    }
-  }, [turmaSelecionada]);
-
-  // --- HANDLER PARA EXPANDIR TURMA (BUSCA PELO ID) ---
-const handleTurmaSelect = async (turmaSimplificada) => {
-  try {
-    setLoadingDetalhes(true);
-    const response = await api.get(`/turmas/${turmaSimplificada.id}`);
-    const data = response.data;
-
-    // Normalizando os dados: Se o C# mandar 'inscricoesTurma', 
-    // mapeamos para o formato que o seu componente espera ('alunos')
-    const turmaFormatada = {
-      ...data,
-      nome: data.nomeTurma || data.nome,
-      // Se vier como inscricoesTurma, extraímos os dados do aluno e notas
-      alunos: (data.inscricoesTurmas || data.inscricoesTurma || []).map(ins => ({
-        id: ins.alunoId,
-        nome: ins.nomeAluno || (ins.aluno ? ins.aluno.nome : "Aluno"),
-        ra: ins.raAluno || (ins.aluno ? ins.aluno.ra : ""),
-        notas: {
-          p1: ins.p1,
-          p2: ins.p2,
-          t1: ins.trabalho
-        }
-      })),
-      // Atividades fixas caso o banco ainda não retorne
-      atividades: data.atividades || [
-        { id: 'p1', nome: 'Prova 1 (P1)' },
-        { id: 'p2', nome: 'Prova 2 (P2)' },
-        { id: 't1', nome: 'Trabalho (T1)' },
-      ]
+    const inicializarNotas = async () => {
+      if (turmaSelecionada && turmaSelecionada.atividades?.length > 0) {
+        const primeiraAtividade = turmaSelecionada.atividades[0].id;
+        setAtividadeAtual(primeiraAtividade);
+        await carregarNotasDaAtividade(primeiraAtividade, turmaSelecionada);
+      }
     };
 
-    setTurmaSelecionada(turmaFormatada);
+    inicializarNotas();
+  }, [turmaSelecionada]);
 
-    const alunosState = {};
-    turmaFormatada.alunos.forEach(aluno => {
-      alunosState[aluno.id] = 'presente';
-    });
-    
-    setChamada(alunosState);
-    setView('selecionar_acao');
-    
-  } catch (error) {
-    console.error("Erro detalhado:", error);
-    alert("Erro ao carregar. Verifique o console.");
-  } finally {
-    setLoadingDetalhes(false);
-  }
-};
+  const handleTurmaSelect = async (turmaSimplificada) => {
+    try {
+      setLoadingDetalhes(true);
+
+      const [responseTurma, responseAvaliacoes] = await Promise.all([
+        api.get(`/turmas/${turmaSimplificada.id}`),
+        api.get(`/turmas/${turmaSimplificada.id}`),
+      ]);
+
+      const data = responseTurma.data || {};
+      const inscricoes = data.inscricoesTurmas || data.inscricoesTurma || [];
+      const avaliacoes = extrairLista(responseAvaliacoes).map(normalizarAvaliacao);
+
+      const turmaFormatada = {
+        ...data,
+        id: data.id ?? data.Id ?? turmaSimplificada.id,
+        nome: data.nomeTurma || data.nome,
+        alunos: inscricoes.map((ins) => ({
+          id: ins.alunoId ?? ins.AlunoId ?? ins.aluno?.id ?? ins.Aluno?.Id,
+          matriculaId: ins.id ?? ins.Id ?? ins.matriculaId ?? ins.MatriculaId ?? null,
+          nome: ins.nomeAluno ?? ins.NomeAluno ?? ins.aluno?.nome ?? ins.Aluno?.Nome ?? 'Aluno',
+          ra: ins.raAluno ?? ins.RaAluno ?? ins.aluno?.ra ?? ins.Aluno?.Ra ?? '',
+          notas: {
+            p1: ins.p1,
+            p2: ins.p2,
+            t1: ins.trabalho,
+          },
+        })),
+        atividades:
+          avaliacoes.length > 0
+            ? avaliacoes.map((avaliacao) => ({ id: avaliacao.id, nome: avaliacao.nome, peso: avaliacao.peso }))
+            : [
+                { id: 'p1', nome: 'Prova 1 (P1)' },
+                { id: 'p2', nome: 'Prova 2 (P2)' },
+                { id: 't1', nome: 'Trabalho (T1)' },
+              ],
+      };
+
+      setTurmaSelecionada(turmaFormatada);
+      console.log('Turma selecionada com detalhes:', turmaFormatada);
+
+      const alunosState = {};
+      turmaFormatada.alunos.forEach((aluno) => {
+        alunosState[aluno.id] = 'presente';
+      });
+
+      setChamada(alunosState);
+      setView('selecionar_acao');
+    } catch (error) {
+      console.error('Erro ao carregar detalhes da turma:', error);
+      alert(formatarErroApi(error, 'Erro ao carregar detalhes da turma.'));
+    } finally {
+      setLoadingDetalhes(false);
+    }
+  };
 
   // --- HANDLERS DE INTERAÇÃO ---
   const handleToggleFalta = (alunoId) => {
     setChamada(prev => ({...prev, [alunoId]: prev[alunoId] === 'presente' ? 'ausente' : 'presente'}));
   };
 
-  const handleSalvarChamada = () => {
-    alert(`Chamada da turma ${turmaSelecionada.id} salva com sucesso!`);
-    setView('selecionar_acao');
+  const handleSalvarChamada = async () => {
+    if (!turmaSelecionada?.alunos?.length) {
+      alert('Nenhum aluno encontrado para lancar frequencia.');
+      return;
+    }
+
+    const dataAula = new Date().toISOString();
+    setSalvandoChamada(true);
+    try {
+      const requests = turmaSelecionada.alunos
+        .filter((aluno) => Number.isFinite(Number(aluno.matriculaId)))
+        .map((aluno) => {
+          const presente = chamada[aluno.id] !== 'ausente';
+          return api.post(`${PROFESSOR_BASE}/faltas`, {
+            idMatricula: Number(aluno.matriculaId),
+            dataAula,
+            presente,
+            justificativa: presente ? null : 'Ausencia sem justificativa.',
+            qtdAulas: 1,
+          });
+        });
+
+      if (requests.length === 0) {
+        alert('Nao foi possivel identificar as matriculas dos alunos da turma.');
+        return;
+      }
+
+      await Promise.all(requests);
+      alert('Frequencia salva com sucesso.');
+      setView('selecionar_acao');
+    } catch (error) {
+      console.error('Erro ao salvar frequencia:', error);
+      alert(formatarErroApi(error, 'Erro ao salvar frequencia.'));
+    } finally {
+      setSalvandoChamada(false);
+    }
   };
 
-  const handleAtividadeChange = (id) => {
+  const handleAtividadeChange = async (id) => {
     setAtividadeAtual(id);
-    carregarNotasDaAtividade(id, turmaSelecionada);
+    await carregarNotasDaAtividade(id, turmaSelecionada);
   };
 
   const handleNotaChange = (alunoId, nota) => {
@@ -126,9 +244,45 @@ const handleTurmaSelect = async (turmaSimplificada) => {
     setNotasEditaveis(prev => ({ ...prev, [alunoId]: v }));
   };
 
-  const handleSalvarNotas = () => {
-    alert(`Notas da atividade ${atividadeAtual} enviadas!`);
-    setView('selecionar_acao');
+  const handleSalvarNotas = async () => {
+    const atividadeId = Number(atividadeAtual);
+    if (!Number.isFinite(atividadeId) || atividadeId <= 0) {
+      alert('Selecione uma avaliacao valida vinda do servidor para salvar notas.');
+      return;
+    }
+
+    setSalvandoNotas(true);
+    try {
+      const requests = turmaSelecionada.alunos
+        .filter((aluno) => Number.isFinite(Number(aluno.matriculaId)))
+        .map((aluno) => {
+          const valor = notasEditaveis[aluno.id];
+          if (valor === '' || valor === null || Number.isNaN(Number(valor))) {
+            return null;
+          }
+
+          return api.post(`${PROFESSOR_BASE}/notas`, {
+            idAvaliacao: atividadeId,
+            idMatricula: Number(aluno.matriculaId),
+            valorObtido: Number(valor),
+          });
+        })
+        .filter(Boolean);
+
+      if (requests.length === 0) {
+        alert('Nenhuma nota valida foi informada para envio.');
+        return;
+      }
+
+      await Promise.all(requests);
+      alert('Notas salvas com sucesso.');
+      setView('selecionar_acao');
+    } catch (error) {
+      console.error('Erro ao salvar notas:', error);
+      alert(formatarErroApi(error, 'Erro ao salvar notas.'));
+    } finally {
+      setSalvandoNotas(false);
+    }
   };
 
   // --- TELAS (MANTENDO DESIGN ORIGINAL) ---
@@ -155,7 +309,7 @@ const handleTurmaSelect = async (turmaSimplificada) => {
                 <span className="text-muted">{turma.disciplina?.nome}</span>
               </div>
               <p className="mb-1">Horário: {turma.horariosFormatados?.join(' / ')}</p>
-              <small>{turma.inscricoesTurmas?.length ?? 0} alunos matriculados</small>
+              <small>{turma.quantidadeInscritos ?? 0} alunos matriculados</small>
             </button>
           ))
         )}

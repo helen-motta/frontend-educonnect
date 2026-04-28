@@ -1,90 +1,167 @@
-import React, { useState, useMemo } from 'react';
-
-// --- MOCK DE DADOS (Simula logs reais de um backend) ---
-const MOCK_LOGS_INICIAIS = [
-  { id: 1, timestamp: '2023-11-25 10:30:00', usuario: 'admin@escola.com', tipo: 'CRUD', acao: 'DELETE', entidade: 'Usuário', detalhes: 'Usuário "João Silva" (ID: 101) excluído.', ip: '192.168.1.10' },
-  { id: 3, timestamp: '2023-11-25 09:45:30', usuario: 'prof.ana@escola.com', tipo: 'ACADEMICO', acao: 'UPDATE', entidade: 'Notas', detalhes: 'Notas da P1 para "Cálculo I - Turma A" atualizadas.', ip: '10.0.0.5' },
-  { id: 4, timestamp: '2023-11-25 09:40:00', usuario: 'aluno.maria@escola.com', tipo: 'REQUERIMENTO', acao: 'CREATE', entidade: 'Requerimento', detalhes: 'Requerimento de 2ª Via de Carteirinha solicitado.', ip: '172.16.0.2' },
-  { id: 5, timestamp: '2023-11-24 18:00:00', usuario: 'SISTEMA', tipo: 'MATRICULA', acao: 'UPDATE', entidade: 'Período Matrícula', detalhes: 'Fase de matrícula "Todos os Alunos" iniciada.', ip: 'N/A' },
-  { id: 6, timestamp: '2023-11-24 17:59:59', usuario: 'admin@escola.com', tipo: 'MATRICULA', acao: 'UPDATE', entidade: 'Período Matrícula', detalhes: 'Configuração de período de matrícula alterada.', ip: '192.168.1.10' },
-  { id: 7, timestamp: '2023-11-24 14:10:20', usuario: 'admin@escola.com', tipo: 'CRUD', acao: 'CREATE', entidade: 'Disciplina', detalhes: 'Disciplina "Análise de Dados" criada no curso "Eng. Software".', ip: '192.168.1.10' },
-  { id: 10, timestamp: '2023-11-22 11:00:00', usuario: 'prof.carlos@escola.com', tipo: 'ACADEMICO', acao: 'CREATE', entidade: 'Comunicado', detalhes: 'Comunicado "Aula Cancelada" enviado para "Física II - Turma B".', ip: '10.0.0.6' },
-  { id: 12, timestamp: '2023-11-21 15:30:00', usuario: 'admin@escola.com', tipo: 'CONFIG', acao: 'UPDATE', entidade: 'Configurações', detalhes: 'Cor primária do tema alterada para #007bff.', ip: '192.168.1.10' },
-  { id: 13, timestamp: '2023-11-21 14:00:00', usuario: 'admin@escola.com', tipo: 'CRUD', acao: 'CREATE', entidade: 'Usuário', detalhes: 'Novo professor "Dr. Roberto" (ID: 205) cadastrado.', ip: '192.168.1.10' },
-];
-// -----------------------------------------------------------------
+import React, { useEffect, useMemo, useState } from 'react';
+import api from '../api';
 
 const LOG_TIPOS = ['Todos', 'CRUD', 'AUTH', 'ACADEMICO', 'REQUERIMENTO', 'MATRICULA', 'CONFIG', 'SISTEMA', 'BACKUP'];
 const LOG_ACOES = ['Todas', 'CREATE', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT', 'ENVIAR', 'INICIAR', 'ENCERRAR', 'EXECUTE'];
 
+const mapearLog = (log, idx) => {
+  const msg = log.msg ?? log.detalhes ?? 'Atividade registrada.';
+  const rawTimestamp = log.dataHora;
+  const timestamp = typeof rawTimestamp === 'string'
+    ? rawTimestamp
+    : new Date(rawTimestamp).toLocaleString('pt-BR');
+
+    console.log('Log original:', log);
+    console.log('Log mapeado:', { timestamp, msg });
+
+  return {
+    id: log.id,
+    timestamp,
+    usuario: log.usuario,
+    acao: log.acao,
+    detalhes: msg,
+    ip: log.ip,
+  };
+};
+
+const extrairListaPaginada = (data) => {
+  if (Array.isArray(data)) return data;
+
+  return data?.data
+    ?? data?.Data
+    ?? data?.itens
+    ?? data?.Itens
+    ?? data?.items
+    ?? data?.Items
+    ?? [];
+};
+
+const extrairTotalPaginas = (data, fallbackTotalItens = 0, paginaTamanho = 10) => {
+  const valor = data?.totalPaginas
+    ?? data?.TotalPaginas
+    ?? data?.totalPages
+    ?? data?.TotalPages;
+
+  if (typeof valor === 'number' && valor > 0) return valor;
+
+  const totalItens = data?.totalItens
+    ?? data?.TotalItens
+    ?? data?.totalRegistros
+    ?? data?.TotalRegistros
+    ?? fallbackTotalItens;
+
+  return Math.max(1, Math.ceil((Number(totalItens) || 0) / paginaTamanho));
+};
+
 export default function LogsSistema() {
 
-  const [logs, setLogs] = useState(MOCK_LOGS_INICIAIS);
+  const [logs, setLogs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState('');
   const [filtroUsuario, setFiltroUsuario] = useState('');
   const [filtroTipo, setFiltroTipo] = useState('Todos');
   const [filtroAcao, setFiltroAcao] = useState('Todas');
   const [filtroDetalhes, setFiltroDetalhes] = useState('');
+  const [filtroDataInicio, setFiltroDataInicio] = useState('');
+  const [filtroDataFim, setFiltroDataFim] = useState('');
 
   // Paginação
   const [paginaAtual, setPaginaAtual] = useState(1);
   const logsPorPagina = 10;
+  const [totalPaginas, setTotalPaginas] = useState(1);
 
-  // --- LÓGICA DE FILTRAGEM (useMemo para performance) ---
-  const logsFiltrados = useMemo(() => {
+  useEffect(() => {
+    let ativo = true;
+
+    const carregarLogs = async () => {
+      setLoading(true);
+      setErro('');
+
+      try {
+        const params = {
+          PaginaNumero: paginaAtual,
+          PaginaTamanho: logsPorPagina,
+          Usuario: filtroUsuario.trim() || undefined,
+          Tipo: filtroTipo !== 'Todos' ? filtroTipo : undefined,
+          Acao: filtroAcao !== 'Todas' ? filtroAcao : undefined,
+          DataInicio: filtroDataInicio ? new Date(`${filtroDataInicio}T00:00:00`).toISOString() : undefined,
+          DataFim: filtroDataFim ? new Date(`${filtroDataFim}T23:59:59`).toISOString() : undefined,
+        };
+
+        const response = await api.get('/audit/logs', { params });
+        const data = response?.data ?? {};
+        const dadosLogs = extrairListaPaginada(data);
+        const total = extrairTotalPaginas(data, dadosLogs.length, logsPorPagina);
+
+        if (!ativo) return;
+
+        setLogs(dadosLogs.map(mapearLog));
+        setTotalPaginas(total);
+      } catch (err) {
+        if (!ativo) return;
+        setErro('Nao foi possivel carregar os logs de auditoria.');
+        setLogs([]);
+        setTotalPaginas(1);
+      } finally {
+        if (ativo) {
+          setLoading(false);
+        }
+      }
+    };
+
+    carregarLogs();
+
+    return () => {
+      ativo = false;
+    };
+  }, [paginaAtual, filtroUsuario, filtroTipo, filtroAcao, filtroDataInicio, filtroDataFim]);
+
+  useEffect(() => {
+    setPaginaAtual(1);
+  }, [filtroUsuario, filtroTipo, filtroAcao, filtroDataInicio, filtroDataFim]);
+
+  const logsExibidos = useMemo(() => {
     let logsProcessados = logs;
 
-    if (filtroUsuario) {
-      logsProcessados = logsProcessados.filter(log =>
-        log.usuario.toLowerCase().includes(filtroUsuario.toLowerCase())
-      );
-    }
-    if (filtroTipo !== 'Todos') {
-      logsProcessados = logsProcessados.filter(log => log.tipo === filtroTipo);
-    }
-    if (filtroAcao !== 'Todas') {
-      logsProcessados = logsProcessados.filter(log => log.acao === filtroAcao);
-    }
+    // Filtro local complementar para detalhes (aplica somente na página atual).
     if (filtroDetalhes) {
       logsProcessados = logsProcessados.filter(log =>
         log.detalhes.toLowerCase().includes(filtroDetalhes.toLowerCase()) ||
         log.entidade.toLowerCase().includes(filtroDetalhes.toLowerCase())
       );
     }
-    
-    // Ordena os logs do mais recente para o mais antigo
-    return logsProcessados.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
-  }, [logs, filtroUsuario, filtroTipo, filtroAcao, filtroDetalhes]);
+    return logsProcessados;
 
-  // Lógica de Paginação
-  const totalPaginas = Math.ceil(logsFiltrados.length / logsPorPagina);
-  const indiceUltimoLog = paginaAtual * logsPorPagina;
-  const indicePrimeiroLog = indiceUltimoLog - logsPorPagina;
-  const logsAtuais = logsFiltrados.slice(indicePrimeiroLog, indiceUltimoLog);
+  }, [logs, filtroDetalhes]);
+
+  const paginasParaRender = useMemo(() => {
+    return Array.from({ length: totalPaginas }, (_, index) => index + 1);
+  }, [totalPaginas]);
 
   const handleMudarPagina = (numeroPagina) => {
+    if (numeroPagina < 1 || numeroPagina > totalPaginas) return;
     setPaginaAtual(numeroPagina);
   };
 
-  // --- JSX (Renderização) ---
   return (
     <>
       <h2 className="mb-4">Logs do Sistema e Auditoria</h2>
+
+      {erro && <div className="alert alert-warning">{erro}</div>}
 
       <div className="alert alert-info">
         <i className="bi bi-info-circle-fill me-2"></i>
         Aqui você pode monitorar todas as ações importantes do sistema.
       </div>
 
-      {/* --- BARRA DE FILTROS --- */}
       <div className="card shadow-sm border-0 mb-4">
         <div className="card-header bg-white py-3">
           <h5 className="mb-0">Filtros</h5>
         </div>
         <div className="card-body">
           <div className="row g-3">
-            {/* Filtro por Usuário */}
-            <div className="col-md-3">
+            <div className="col-md-2">
               <label htmlFor="filtroUsuario" className="form-label">Usuário</label>
               <input
                 type="text"
@@ -95,8 +172,7 @@ export default function LogsSistema() {
                 onChange={(e) => setFiltroUsuario(e.target.value)}
               />
             </div>
-            {/* Filtro por Tipo */}
-            <div className="col-md-3">
+            <div className="col-md-2">
               <label htmlFor="filtroTipo" className="form-label">Tipo de Log</label>
               <select
                 className="form-select"
@@ -109,8 +185,7 @@ export default function LogsSistema() {
                 ))}
               </select>
             </div>
-            {/* Filtro por Ação */}
-            <div className="col-md-3">
+            <div className="col-md-2">
               <label htmlFor="filtroAcao" className="form-label">Ação</label>
               <select
                 className="form-select"
@@ -123,8 +198,27 @@ export default function LogsSistema() {
                 ))}
               </select>
             </div>
-            {/* Filtro por Detalhes */}
-            <div className="col-md-3">
+            <div className="col-md-2">
+              <label htmlFor="filtroDataInicio" className="form-label">Data início</label>
+              <input
+                type="date"
+                className="form-control"
+                id="filtroDataInicio"
+                value={filtroDataInicio}
+                onChange={(e) => setFiltroDataInicio(e.target.value)}
+              />
+            </div>
+            <div className="col-md-2">
+              <label htmlFor="filtroDataFim" className="form-label">Data fim</label>
+              <input
+                type="date"
+                className="form-control"
+                id="filtroDataFim"
+                value={filtroDataFim}
+                onChange={(e) => setFiltroDataFim(e.target.value)}
+              />
+            </div>
+            <div className="col-md-2">
               <label htmlFor="filtroDetalhes" className="form-label">Buscar nos Detalhes</label>
               <input
                 type="text"
@@ -139,7 +233,6 @@ export default function LogsSistema() {
         </div>
       </div>
 
-      {/* --- TABELA DE LOGS --- */}
       <div className="card shadow-sm border-0">
         <div className="card-body p-0">
           <div className="table-responsive">
@@ -147,24 +240,26 @@ export default function LogsSistema() {
               <thead>
                 <tr>
                   <th scope="col" style={{ width: '180px' }}>Data/Hora</th>
-                  <th scope="col" style={{ width: '150px' }}>Usuário</th>
-                  <th scope="col" style={{ width: '100px' }}>Tipo</th>
+                  <th scope="col" style={{ width: '150px' }}>Id Usuário</th>
                   <th scope="col" style={{ width: '100px' }}>Ação</th>
                   <th scope="col">Detalhes</th>
                   <th scope="col" style={{ width: '120px' }}>IP</th>
                 </tr>
               </thead>
               <tbody>
-                {logsAtuais.length === 0 ? (
+                {loading ? (
+                  <tr>
+                    <td colSpan="6" className="text-center p-4 text-muted">Carregando logs de auditoria...</td>
+                  </tr>
+                ) : logsExibidos.length === 0 ? (
                   <tr>
                     <td colSpan="6" className="text-center p-4 text-muted">Nenhum log encontrado com os filtros aplicados.</td>
                   </tr>
                 ) : (
-                  logsAtuais.map(log => (
+                  logsExibidos.map(log => (
                     <tr key={log.id}>
                       <td><small>{log.timestamp}</small></td>
                       <td><strong>{log.usuario}</strong></td>
-                      <td><span className="badge bg-secondary-subtle text-secondary-emphasis">{log.tipo}</span></td>
                       <td><span className="badge bg-primary-subtle text-primary-emphasis">{log.acao}</span></td>
                       <td>{log.detalhes}</td>
                       <td><small>{log.ip}</small></td>
@@ -176,7 +271,6 @@ export default function LogsSistema() {
           </div>
         </div>
         
-        {/* --- PAGINAÇÃO --- */}
         {totalPaginas > 1 && (
           <div className="card-footer bg-white d-flex justify-content-center">
             <nav>
@@ -184,9 +278,9 @@ export default function LogsSistema() {
                 <li className={`page-item ${paginaAtual === 1 ? 'disabled' : ''}`}>
                   <button className="page-link" onClick={() => handleMudarPagina(paginaAtual - 1)}>Anterior</button>
                 </li>
-                {[...Array(totalPaginas)].map((_, index) => (
-                  <li key={index} className={`page-item ${paginaAtual === index + 1 ? 'active' : ''}`}>
-                    <button className="page-link" onClick={() => handleMudarPagina(index + 1)}>{index + 1}</button>
+                {paginasParaRender.map((pagina) => (
+                  <li key={pagina} className={`page-item ${paginaAtual === pagina ? 'active' : ''}`}>
+                    <button className="page-link" onClick={() => handleMudarPagina(pagina)}>{pagina}</button>
                   </li>
                 ))}
                 <li className={`page-item ${paginaAtual === totalPaginas ? 'disabled' : ''}`}>
