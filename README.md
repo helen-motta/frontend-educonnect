@@ -52,7 +52,11 @@ O token fica centralizado no contexto de autenticação e é adicionado às cham
 npm start       # desenvolvimento em http://localhost:5173
 npm run build   # gera a pasta dist
 npm run preview # visualiza o build local
+npm test        # executa os testes unitários com Jest
+npm run test:coverage # gera o relatório de cobertura
 ```
+
+Os testes priorizam sessão/autenticação, proteção de rotas e os contratos mais sensíveis da API, incluindo upload de imagem e matrícula.
 
 ## Docker
 
