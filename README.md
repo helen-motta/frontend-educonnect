@@ -1,6 +1,6 @@
 # EduConnect Web
 
-Portal React do EduConnect. O frontend usa Vite, autenticação JWT e uma camada única de acesso à API; as telas acadêmicas não dependem mais de coleções mockadas locais.
+Portal React do EduConnect. O frontend usa Vite, autenticação JWT e uma camada única de acesso à API.
 
 ## Execução rápida
 
