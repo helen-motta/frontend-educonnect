@@ -97,7 +97,8 @@ Indicadores de aprovação, reprovação, evasão e frequência ainda precisam s
 - FullCalendar;
 - QR Code React;
 - html2canvas;
-- Docker e Nginx.
+- Docker e Nginx;
+- Jest
 
 ## Configuração
 
@@ -126,10 +127,8 @@ npm run build
 npm run preview
 ```
 
-## Pontos pendentes
-
-- implementar insights acadêmicos reais;
-- adicionar testes de componentes e fluxos;
-- melhorar a autorização por perfil;
-- padronizar tabelas, formulários e mensagens;
-- adicionar monitoramento de erros do frontend.
+## Testes
+``` 
+npm test
+npm run test:coverage
+```
