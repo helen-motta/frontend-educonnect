@@ -67,25 +67,11 @@ O frontend apenas apresenta e filtra os registros. A auditoria é criada no serv
 
 ## Integração com AWS
 
-O frontend não acessa diretamente o S3.
-
 ```text
 Frontend → Backend → Amazon S3
 ```
 
 A foto é enviada como `multipart/form-data`. O backend valida o arquivo, realiza o upload e devolve a URL pública.
-
-Nenhuma credencial AWS fica disponível no navegador.
-
-## Insights acadêmicos
-
-O modal de cursos atualmente mostra:
-
-- carga horária;
-- quantidade de disciplinas;
-- código e descrição.
-
-Indicadores de aprovação, reprovação, evasão e frequência ainda precisam ser calculados no backend por um endpoint específico.
 
 ## Tecnologias
 
