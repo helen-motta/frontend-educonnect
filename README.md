@@ -1,6 +1,6 @@
 # EduConnect Web
 
-#### Assista à demonstração: https://www.youtube.com/watch?v=LNjgi51A1JI
+#### Assista à demonstração: https://youtu.be/zroIF8uF_fc
 
 Portal React que centraliza as funções acadêmicas e administrativas da faculdade em uma única aplicação.
 
