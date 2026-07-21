@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Outlet, Navigate, Link } from "react-router-dom";
-import { useTheme } from "./ThemeContext";
-import { useAuth } from "./AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
+import { useAuth } from "../contexts/AuthContext";
+import { portalService } from "../services/portalService";
 import { Toast, ToastContainer } from "react-bootstrap";
 
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -22,24 +23,7 @@ export default function Dashboard() {
 
   const dropdownAreaRef = useRef(null);
 
-  const [notificacoes, setNotificacoes] = useState([
-    {
-      id: 1,
-      titulo: "Nova nota lançada",
-      descricao: "Sua nota de Engenharia de Software (P1) foi publicada.",
-      tempo: "5 min atrás",
-      lida: false,
-      tipo: "nota",
-    },
-    {
-      id: 2,
-      titulo: "Aviso: Mudança de sala",
-      descricao: "Prof. Silva (Cálculo I): A aula de hoje será na sala B-105.",
-      tempo: "1 hora atrás",
-      lida: false,
-      tipo: "aviso",
-    },
-  ]);
+  const [notificacoes, setNotificacoes] = useState([]);
 
   const [showToast, setShowToast] = useState(false);
   const [toastContent, setToastContent] = useState({ titulo: "", msg: "" });
@@ -66,6 +50,18 @@ export default function Dashboard() {
     document.addEventListener("mousedown", handleClickOutside);
     return () =>
       document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    portalService.getNotices()
+      .then((items) => setNotificacoes(items.map((item) => ({
+        id: item.id,
+        titulo: item.assunto,
+        descricao: item.mensagem,
+        tempo: new Date(item.criadoEm).toLocaleDateString("pt-BR"),
+        lida: false,
+      }))))
+      .catch(() => setNotificacoes([]));
   }, []);
 
   if (!user) {
@@ -233,7 +229,7 @@ export default function Dashboard() {
                 }}
               >
                 <img
-                  src={user.fotoUrl || "/imagens/usuario-generico.png"}
+                  src={user.usuario?.fotoUrl || "/imagens/usuario-generico.png"}
                   alt="Perfil"
                   width="38"
                   height="38"
@@ -241,13 +237,13 @@ export default function Dashboard() {
                 />
 
                 <div className="text-start">
-                  <div className="fw-bold lh-1 small">teste</div>
+                  <div className="fw-bold lh-1 small">{user.usuario?.nome}</div>
 
                   <small
                     className="text-muted text-capitalize"
                     style={{ fontSize: "0.75rem" }}
                   >
-                    teste
+                    {getProfileTitle(profileId)}
                   </small>
                 </div>
 

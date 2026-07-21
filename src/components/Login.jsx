@@ -2,13 +2,15 @@ import React, { useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import '../App.css';
 import "./Login.css"; 
-import { useAuth } from './AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom'; 
 import LoadingOverlay from './LoadingOverlay';
+import { authenticate, requestPasswordReset } from '../services/authService';
+import { apiErrorMessage } from '../services/api';
 
 export default function Login() {
   const { login } = useAuth(); 
-  const navigate = useNavigate();
+  useNavigate();
 
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
@@ -16,8 +18,6 @@ export default function Login() {
 
   const [showModal, setShowModal] = useState(false); 
   const [resetEmail, setResetEmail] = useState('');
-
-  const API_URL = import.meta.env.VITE_API_URL;
 
   const [toast, setToast] = useState({ show: false, message: '', type: 'danger' });
 
@@ -30,25 +30,10 @@ export default function Login() {
     e.preventDefault();
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/Auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email, senha: senha })
-      });
-      const data = await response.json();
-      if (response.ok) {
-        login(data); 
-        const token = response.data.token;
-        localStorage.setItem('@App:token', token);
-  
-        localStorage.setToken(token);
-        navigate("/Dashboard/Inicio");
-      } else {
-        showNotification(data.message || "Erro ao realizar login");
-      }
+      login(await authenticate(email, senha));
     } catch (error) {
       console.error("Erro na conexão:", error);
-      showNotification("Não foi possível conectar ao servidor.");
+      showNotification(apiErrorMessage(error, "Não foi possível conectar ao servidor."));
     } finally {
       setLoading(false);
     }
@@ -58,17 +43,11 @@ export default function Login() {
     e.preventDefault();
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/Auth/esqueci-senha`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: resetEmail })
-      });
-
-      const data = await response.json();
+      const data = await requestPasswordReset(resetEmail);
       showNotification(data.mensagem, 'success');
       handleCloseModal();
     } catch (error) {
-      showNotification("Erro ao solicitar redefinição.");
+      showNotification(apiErrorMessage(error, "Erro ao solicitar redefinição."));
     }
     finally {
       setLoading(false);

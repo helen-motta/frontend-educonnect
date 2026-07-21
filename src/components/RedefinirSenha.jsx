@@ -5,6 +5,8 @@ import '../App.css';
 import "./Login.css";
 import "./RedefinirSenha.css"; 
 import LoadingOverlay from './LoadingOverlay';
+import { resetPassword } from '../services/authService';
+import { apiErrorMessage } from '../services/api';
 
 export default function RedefinirSenha() {
     const [searchParams] = useSearchParams();
@@ -12,8 +14,6 @@ export default function RedefinirSenha() {
     const token = searchParams.get("token");
     const email = searchParams.get("email");
     
-    const API_URL = import.meta.env.VITE_API_URL;
-
     const [novaSenha, setNovaSenha] = useState('');
     const [confirmarSenha, setConfirmarSenha] = useState('');
     const [loading, setLoading] = useState(false);
@@ -33,31 +33,16 @@ const handleSubmit = async (e) => {
     try {
         setLoading(true); 
 
-        const response = await fetch(`${API_URL}/Auth/reset-senha`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                email: email,
-                token: token, 
-                novaSenha: novaSenha 
-            })
-        });
-
-        if (response.ok) {
+        await resetPassword({ email, token, novaSenha });
             showNotification("Senha alterada com sucesso!", "success");
 
             setTimeout(() => {
                 navigate('/login');
             }, 1500); 
 
-        } else {
-            setLoading(false);
-            const data = await response.json();
-            showNotification(data.message || "Token inválido ou expirado.");
-        }
     } catch (error) {
         setLoading(false);
-        showNotification("Erro ao conectar ao servidor.");
+        showNotification(apiErrorMessage(error, "Erro ao conectar ao servidor."));
     } 
 };
 

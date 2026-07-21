@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import api from './../api';
+import api from '../services/api';
 import './GerenciarCursos.css';
 
 const VALORES_INICIAIS_DISCIPLINA = {
@@ -19,17 +19,6 @@ const VALORES_INICIAIS_CURSO = {
   cargaHoraria: '',
   modalidade: 1,
   idCoordenador: '',
-};
-
-const MOCK_INSIGHTS = {
-  reprovação: 18.5,
-  media_notas: 7.2,
-  taxa_evasao: 12.4,
-  descontinuidade: [
-    { motivo: 'Trancamento', qtd: 45, cor: '#ffc107' },
-    { motivo: 'Reprovação por Nota', qtd: 30, cor: '#dc3545' },
-    { motivo: 'Reprovação por Falta', qtd: 25, cor: '#6c757d' }
-  ]
 };
 
 const themeColors = {
@@ -518,45 +507,27 @@ export default function GerenciarCursos() {
               <button className="btn-close btn-close-white" onClick={() => setShowModalInsights(false)}></button>
             </div>
             
-            {/* O restante do modal de insights mantive exatamente como você estilizou */}
             <div className="p-4 bg-light">
               <div className="row g-3 mb-4">
-                {/* ... conteúdo dos KPIs ... */}
-                <div className="col-4">
-                  <div className="p-3 bg-white rounded-4 shadow-sm text-center border-bottom border-danger border-3">
-                    <small className="text-muted fw-bold d-block mb-1">REPROVAÇÃO</small>
-                    <h4 className="text-danger fw-bold mb-0">{MOCK_INSIGHTS.reprovação}%</h4>
-                  </div>
-                </div>
-                <div className="col-4">
+                <div className="col-6">
                   <div className="p-3 bg-white rounded-4 shadow-sm text-center border-bottom border-primary border-3">
-                    <small className="text-muted fw-bold d-block mb-1">MÉDIA GLOBAL</small>
-                    <h4 className="text-primary fw-bold mb-0">{MOCK_INSIGHTS.media_notas}</h4>
+                    <small className="text-muted fw-bold d-block mb-1">CARGA HORÁRIA</small>
+                    <h4 className="text-primary fw-bold mb-0">{cursoSelecionadoInsights.cargaHoraria}h</h4>
                   </div>
                 </div>
-                <div className="col-4">
-                  <div className="p-3 bg-white rounded-4 shadow-sm text-center border-bottom border-warning border-3">
-                    <small className="text-muted fw-bold d-block mb-1">EVASÃO</small>
-                    <h4 className="text-warning fw-bold mb-0">{MOCK_INSIGHTS.taxa_evasao}%</h4>
+                <div className="col-6">
+                  <div className="p-3 bg-white rounded-4 shadow-sm text-center border-bottom border-primary border-3">
+                    <small className="text-muted fw-bold d-block mb-1">DISCIPLINAS</small>
+                    <h4 className="text-primary fw-bold mb-0">{cursoSelecionadoInsights.disciplinas?.length || 0}</h4>
                   </div>
                 </div>
               </div>
 
               <div className="card border-0 rounded-4 p-4 shadow-sm">
-                <h6 className="fw-bold mb-4 text-center text-secondary text-uppercase">Razões de Descontinuidade do Curso</h6>
-                <div className="px-md-5">
-                  {MOCK_INSIGHTS.descontinuidade.map((item, idx) => (
-                    <div key={idx} className="mb-4">
-                      <div className="d-flex justify-content-between small mb-2 fw-bold">
-                        <span>{item.motivo}</span>
-                        <span className="text-muted">{item.qtd}%</span>
-                      </div>
-                      <div className="progress rounded-pill" style={{height: '12px'}}>
-                        <div className="progress-bar" style={{width: `${item.qtd}%`, backgroundColor: item.cor}}></div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <h6 className="fw-bold mb-3 text-secondary text-uppercase">Dados cadastrados</h6>
+                <p className="mb-2"><strong>Código:</strong> {cursoSelecionadoInsights.codigo}</p>
+                <p className="mb-0"><strong>Descrição:</strong> {cursoSelecionadoInsights.descricao || 'Não informada'}</p>
+                <small className="text-muted mt-3">Indicadores de reprovação e evasão serão exibidos quando houver histórico acadêmico suficiente.</small>
               </div>
             </div>
 

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import api from './../api';
+import api from '../services/api';
 
 export default function GerenciarRequerimentos() {
 
@@ -75,7 +75,7 @@ export default function GerenciarRequerimentos() {
     try {
       await api.put(`/requerimentos/${reqSelecionado.id}`, {
         status: novoStatus,
-        parecer: textoParecer
+        respostaAdmin: textoParecer
       });
       
       // Atualiza o state local

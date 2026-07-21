@@ -1,4 +1,4 @@
-import { useAuth } from './AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import Inicio from './Inicio';
 import InicioProfessor from './InicioProfessor';
 import InicioAdm from './InicioAdm';

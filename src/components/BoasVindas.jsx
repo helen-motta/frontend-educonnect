@@ -50,7 +50,7 @@ const BoasVindas = () => {
         </div>
       </main>
 
-      {/* SEÇÃO SOBRE (MOCK DATA) */}
+      {/* SEÇÃO SOBRE */}
       <section className="info-section" id="about">
         <h2>Sobre a EduConnect</h2>
         <div className="features-grid">

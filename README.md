@@ -1,70 +1,70 @@
-# Getting Started with Create React App
+# EduConnect Web
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Portal React do EduConnect. O frontend usa Vite, autenticação JWT e uma camada única de acesso à API; as telas acadêmicas não dependem mais de coleções mockadas locais.
 
-## Available Scripts
+## Execução rápida
 
-In the project directory, you can run:
+Pré-requisitos: Node.js 20 ou superior e npm.
 
-### `npm start`
+```powershell
+npm ci
+Copy-Item .env.example .env
+npm start
+```
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+Abra `http://localhost:5173`. A API deve estar em `http://localhost:5055`, conforme `.env.example`.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+Para testar a aplicação completa, inicie primeiro o backend. Ele cria seu próprio SQLite e dados de demonstração, portanto não é necessário baixar um banco.
 
-### `npm test`
+## Configuração
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+```text
+VITE_API_URL=http://localhost:5055/api
+```
 
-### `npm run build`
+Altere `VITE_API_URL` quando o backend estiver em outro endereço. Variáveis Vite são incorporadas durante o build; em produção, defina o valor antes de executar `npm run build`.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Contas locais
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+Com o seed padrão do backend, use a senha `123456` e uma das contas:
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+- `admin@educonnect.local`
+- `coordenador@educonnect.local`
+- `professor@educonnect.local`
+- `aluno@educonnect.local`
 
-### `npm run eject`
+## Organização
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+```text
+src/
+├── app/          composição da aplicação e rotas
+├── components/   páginas e componentes visuais
+├── contexts/     sessão/autenticação e tema
+├── services/     cliente HTTP, autenticação e API do portal
+└── main.jsx      ponto de entrada do Vite
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+O token fica centralizado no contexto de autenticação e é adicionado às chamadas pelo cliente HTTP. Perfis, dashboards, turmas, atividades, comunicados, salas, inscrições, matrículas e configurações carregam dados da API.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## Scripts
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+```powershell
+npm start       # desenvolvimento em http://localhost:5173
+npm run build   # gera a pasta dist
+npm run preview # visualiza o build local
+```
 
-## Learn More
+## Docker
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+O endereço da API é definido durante o build:
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+```powershell
+docker build --build-arg VITE_API_URL=http://localhost:5055/api -t educonnect-web .
+docker run --rm -p 5173:80 educonnect-web
+```
 
-### Code Splitting
+Se o navegador acessar a API por outro host, passe esse endereço em `VITE_API_URL` e inclua a origem do frontend em `Cors__AllowedOrigins__0` no backend.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+## Upload de imagens
 
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+A tela de configurações envia a foto como `multipart/form-data` para o backend. O navegador não recebe credenciais AWS: o backend valida e armazena o arquivo diretamente no S3, retornando apenas a URL pública.

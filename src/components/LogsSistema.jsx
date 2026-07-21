@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import api from '../api';
+import api from '../services/api';
 
 const LOG_TIPOS = ['Todos', 'CRUD', 'AUTH', 'ACADEMICO', 'REQUERIMENTO', 'MATRICULA', 'CONFIG', 'SISTEMA', 'BACKUP'];
 const LOG_ACOES = ['Todas', 'CREATE', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT', 'ENVIAR', 'INICIAR', 'ENCERRAR', 'EXECUTE'];

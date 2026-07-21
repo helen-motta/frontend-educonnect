@@ -1,95 +1,14 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import './Carteirinha.css'; // Criaremos este CSS para a mágica da rotação
+import html2canvas from 'html2canvas';
+import { portalService } from '../services/portalService';
+import { apiErrorMessage } from '../services/api';
+import './Carteirinha.css';
 
 export default function Carteirinha() {
-  // 1. State para controlar se o cartão está virado
-  const [isFlipped, setIsFlipped] = useState(false);
-
-  // 2. Dados do Aluno (Mock)
-  const dadosAluno = {
-    nome: "Helena Batista",
-    curso: "Engenharia Civil",
-    ra: "42610001",
-    fotoUrl: "/imagens/usuario-generico.png", // Imagem que você já tem
-    logoUrl: "/imagens/logo-educonnect.png", // Logo que você já tem
-    validade: "12/2026"
-  };
-
-  // 3. O que será codificado no QR Code (pode ser o RA, um link, etc.)
-  const qrCodeValue = `https://meuportal.com/validar?ra=${dadosAluno.ra}`;
-
-  return (
-    <>
-      <h2 className="mb-4">Carteirinha Virtual</h2>
-
-      <div className="row justify-content-center">
-        <div className="col-md-8 col-lg-6">
-          
-          {/* O "Palco" 3D que permite a perspectiva */}
-          <div className="carteirinha-scene">
-            
-            {/* O Cartão, que vai girar */}
-            <div className={`carteirinha-card ${isFlipped ? 'is-flipped' : ''}`}>
-              
-              {/* --- FRENTE DO CARTÃO --- */}
-              <div className="carteirinha-face carteirinha-frente">
-                <div className="header-frente">
-                  <img src={dadosAluno.logoUrl} alt="Logo" className="logo-carteirinha" />
-                </div>
-                <div className="corpo-frente d-flex align-items-center p-3">
-                  <div className="flex-shrink-0">
-                    <img src={dadosAluno.fotoUrl} alt="Foto" className="foto-carteirinha" />
-                  </div>
-                  <div className="flex-grow-1 ms-3">
-                    <h5 className="mb-1">{dadosAluno.nome}</h5>
-                    <p className="mb-1 small text-muted">{dadosAluno.curso}</p>
-                    <p className="mb-0 small"><strong>RA:</strong> {dadosAluno.ra}</p>
-                  </div>
-                </div>
-                <div className="footer-frente">
-                  CARTEIRINHA DE ESTUDANTE
-                </div>
-              </div>
-
-              {/* --- VERSO DO CARTÃO --- */}
-              <div className="carteirinha-face carteirinha-verso">
-                <div className="corpo-verso p-3 text-center">
-                  <p className="mb-2">Apresente este QR Code para acesso:</p>
-                  {/* O Componente que gera o QR Code */}
-                  <div className="qr-code-container">
-                    <QRCodeSVG
-                      value={qrCodeValue}
-                      size={160} // Tamanho em pixels
-                      bgColor="#ffffff"
-                      fgColor="#000000"
-                      level="L" // Nível de correção de erro
-                    />
-                  </div>
-                  <p className="mt-3 mb-0 small">Válido até: {dadosAluno.validade}</p>
-                </div>
-                {/* Simulação de uma tarja magnética (visual) */}
-                <div className="tarja-magnetica"></div>
-                <div className="barcode-simulado small">
-                  || ||| || ||| ||| | ||||| |||
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Botão para Virar o Cartão */}
-          <div className="text-center mt-3">
-            <button 
-              className="btn btn-outline-primary"
-              onClick={() => setIsFlipped(!isFlipped)}
-            >
-              <i className="bi bi-arrow-repeat me-2"></i>
-              {isFlipped ? 'Ver Frente' : 'Ver Verso (QR Code)'}
-            </button>
-          </div>
-
-        </div>
-      </div>
-    </>
-  );
+  const [profile, setProfile] = useState(null); const [error, setError] = useState(''); const cardRef = useRef(null);
+  useEffect(() => { portalService.getProfile().then(setProfile).catch((e) => setError(apiErrorMessage(e))); }, []);
+  const download = async () => { const canvas = await html2canvas(cardRef.current, { scale: 2 }); const link = document.createElement('a'); link.download = `carteirinha-${profile.registro}.png`; link.href = canvas.toDataURL('image/png'); link.click(); };
+  if (error) return <div className="alert alert-danger">{error}</div>; if (!profile) return <div>Carregando carteirinha...</div>;
+  return <><h2 className="mb-4">Carteirinha virtual</h2><div ref={cardRef} className="card shadow border-0 p-4 mx-auto" style={{ maxWidth: 520 }}><div className="d-flex gap-4 align-items-center"><img className="rounded-circle" width="110" height="110" src={profile.fotoUrl || '/imagens/usuario-generico.png'} alt="Foto do aluno" /><div><h4>{profile.nome}</h4><p className="mb-1">Registro: {profile.registro}</p><p className="mb-0">EduConnect · {new Date().getFullYear()}</p></div><QRCodeSVG className="ms-auto" value={`educonnect:aluno:${profile.id}:${profile.registro}`} size={92} /></div></div><div className="text-center mt-3"><button className="btn btn-primary" onClick={download}>Baixar carteirinha</button></div></>;
 }

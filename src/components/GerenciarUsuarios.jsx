@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import api from './../api';
+import api from '../services/api';
 import "./GerenciarUsuarios.css"
 import "./../App.css"
 

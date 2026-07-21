@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import api from './../api';
+import api from '../services/api';
 
 const VALORES_INICIAIS_TURMA = {
   id: null,

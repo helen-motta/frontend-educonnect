@@ -7,8 +7,8 @@ import bootstrap5Plugin from '@fullcalendar/bootstrap5';
 import ptBrLocale from '@fullcalendar/core/locales/pt-br';
 import { Modal } from 'bootstrap';
 
-import api from '../api';
-import { useAuth } from './AuthContext';
+import api from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 import './Calendario.css';
 import 'bootstrap/dist/css/bootstrap.min.css';

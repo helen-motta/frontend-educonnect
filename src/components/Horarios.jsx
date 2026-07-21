@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react'; // Adicionado useRef
-import api from './../api';
+import api from '../services/api';
 import html2canvas from 'html2canvas'; // Importar a biblioteca
 import './Horarios.css';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Horarios() {
+  const { user } = useAuth();
   const [aulas, setAulas] = useState([]);
   const [loading, setLoading] = useState(true);
   const printRef = useRef(); // Referência para capturar a tabela
@@ -27,13 +29,14 @@ export default function Horarios() {
     const buscarHorarios = async () => {
       try {
         setLoading(true);
-        const alunoId = 2; 
+        const alunoId = user?.usuario?.id;
+        if (!alunoId) return;
         const response = await api.get(`/Turmas/aluno/${alunoId}/horarios`);
         setAulas(response.data);
       } catch (error) { console.error(error); } finally { setLoading(false); }
     };
     buscarHorarios();
-  }, []);
+  }, [user?.usuario?.id]);
 
   // Função para baixar a grade
   const handleDownload = async () => {

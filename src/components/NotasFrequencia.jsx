@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import api from './../api'; // Importe sua configuração do axios
+import api from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function NotasFrequencia() {
+  const { user } = useAuth();
   const [disciplinas, setDisciplinas] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [semestre, setSemestre] = useState('2024.1'); // mockado por enquanto
+  const now = new Date();
+  const periodoAtual = `${now.getFullYear()}.${now.getMonth() < 6 ? 1 : 2}`;
 
   const buscarBoletimAluno = async () => {
     try {
       setLoading(true);
-      const alunoId = 2; // Substituir pelo ID dinâmico do usuário logado
+      const alunoId = user?.usuario?.id;
+      if (!alunoId) return;
       const response = await api.get(`/Boletim/aluno/${alunoId}`);
       setDisciplinas(response.data || []);
     } catch (error) {
@@ -21,9 +25,8 @@ export default function NotasFrequencia() {
   };
 
   useEffect(() => {
-    // Por enquanto o semestre é apenas visual; a API ainda não filtra por período
     buscarBoletimAluno();
-  }, [semestre]);
+  }, [user?.usuario?.id]);
 
   const calcularMedia = (disc) => {
     if (disc.notaFinal !== null && disc.notaFinal !== undefined) {
@@ -50,22 +53,7 @@ export default function NotasFrequencia() {
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2 className="mb-0">Notas e Frequência</h2>
 
-        <div className="d-flex align-items-center">
-          <label htmlFor="selectSemestre" className="me-2 text-muted fw-bold">
-            Semestre:
-          </label>
-          <select
-            id="selectSemestre"
-            className="form-select shadow-sm"
-            style={{ width: 'auto' }}
-            value={semestre}
-            onChange={(e) => setSemestre(e.target.value)}
-          >
-            <option value="2024.1">2024 - 1º Semestre</option>
-            <option value="2023.2">2023 - 2º Semestre</option>
-            <option value="2023.1">2023 - 1º Semestre</option>
-          </select>
-        </div>
+        <span className="badge bg-primary-subtle text-primary-emphasis fs-6">Período {periodoAtual}</span>
       </div>
       {loading ? (
         <div className="text-center p-5">Carregando informações...</div>
