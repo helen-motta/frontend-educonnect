@@ -1,7 +1,5 @@
 # EduConnect Web
 
-#### Assista à demonstração: https://youtu.be/zroIF8uF_fc
-
 Portal React que centraliza as funções acadêmicas e administrativas da faculdade em uma única aplicação.
 
 A interface se adapta aos perfis de administrador, coordenador, professor e aluno. Todos utilizam a mesma API para acessar cursos, turmas, notas, frequência, atividades, comunicados, requerimentos e configurações.
